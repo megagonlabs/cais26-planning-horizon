@@ -1,0 +1,366 @@
+base_prompt: |
+  You will be provided the user query (a problem to solve) and the reasoning steps taken to arrive at the solution. Annotate links between reasoning steps to create a Directed Acyclic Graph (DAG), where each node represents a distinct step (reasoning/action).
+
+  # How to Annotate
+  1. Review the input query and the reasoning steps.
+  2. For each node, list:
+    - **parents**: Nodes it depends on
+    - **children**: Nodes that depend on it
+
+  **Dependency Patterns:**
+  - Sequential: Step n depends on n-1
+  - Parallel: Multiple independent steps merge into a common child
+  - Final answers depend on prior results
+  - Nodes with empty `children` are leaves or unused/failed steps
+
+  # Validate DAG
+  - No cycles
+  - Unique, sequential indices (0, 1, ...)
+  - Parent/child lists are reciprocal
+  - At least one root (no parents), one leaf (no children)
+
+  # Output Format
+  Produce a JSON array, one object per node (in order by `index`), including:
+  - `index` (integer, required)
+  - `thought` (string, optional)
+  - `action` (string, optional)
+  - `args` (string, optional)
+  - `observation` (string, optional)
+  - `parents` (array of integers, required)
+  - `children` (array of integers, required)
+
+  # Example Outputs
+
+  {examples}
+
+  # Tips
+  - Use provided dependency templates (sequential, parallel, branching)
+  - Mark failed/unused steps with empty `children`
+  - Ensure required fields and JSON order
+  - If `observation` not available, add `observation_flag` briefly explaining why
+  - Always double-check for at least one root and leaf
+
+  {additional_instructions}
+examples:
+  gsm8k: |
+    ## Example 1
+
+    Query: John volunteers at a shelter twice a month for 3 hours at a time.  How many hours does he volunteer per year?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "First, I should calculate the number of times John volunteers in a year.",
+        "action": "math",
+        "args": "2 * 12",
+        "observation": "24",
+        "parents": [],
+        "children": [
+          1
+        ]
+      },
+      {
+        "index": 1,
+        "thought": "Now, I should calculate the total number of hours John volunteers in a year.",
+        "action": "math",
+        "args": "24 * 3",
+        "observation": "72",
+        "parents": [
+          0
+        ],
+        "children": [
+          2
+        ]
+      },
+      {
+        "index": 2,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "72",
+        "observation": "",
+        "parents": [
+          1
+        ],
+        "children": []
+      }
+    ]
+    ````
+
+    ## Example 2
+
+    Query: Betty is planning to host her friends over for a party. She buys drinks, cakes, and ice creams at a unit cost of $2, $10, and $5 respectively. How much does she spend if she buys 10 drinks, 5 cakes, and 100 ice creams?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "First, I should calculate the amount Betty spends on buying drinks.",
+        "action": "math",
+        "args": "2 * 10",
+        "observation": "20",
+        "parents": [],
+        "children": [
+          3
+        ]
+      },
+      {
+        "index": 1,
+        "thought": "Next, I should calculate the amount Betty spends on buying cakes.",
+        "action": "math",
+        "args": "10 * 5",
+        "observation": "50",
+        "parents": [],
+        "children": [
+          3
+        ]
+      },
+      {
+        "index": 2,
+        "thought": "Lastly, I should calculate the amount Betty spends on buying ice creams.",
+        "action": "math",
+        "args": "5 * 100",
+        "observation": "500",
+        "parents": [],
+        "children": [
+          3
+        ]
+      },
+      {
+        "index": 3,
+        "thought": "Now, I should calculate the total amount Betty spends.",
+        "action": "math",
+        "args": "20 + 50 + 500",
+        "observation": "570",
+        "parents": [
+          0,
+          1,
+          2
+        ],
+        "children": [
+          4
+        ]
+      },
+      {
+        "index": 4,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "570",
+        "observation": "",
+        "parents": [
+          3
+        ],
+        "children": []
+      }
+    ]
+
+    ## Example 3
+
+    Query: Bob orders a dozen muffins a day for $0.75 each and sells them for $1.5 each.  How much profit does he make a week?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "First, I should calculate the cost of buying a dozen muffins for Bob.",
+        "action": "math",
+        "args": "12 * 0.75",
+        "observation": "9",
+        "parents": [],
+        "children": [
+          2
+        ]
+      },
+      {
+        "index": 1,
+        "thought": "Now, I should calculate the revenue from selling a dozen muffins for Bob.",
+        "action": "math",
+        "args": "12 * 1.5",
+        "observation": "18",
+        "parents": [],
+        "children": [
+          2
+        ]
+      },
+      {
+        "index": 2,
+        "thought": "Next, I should calculate the profit Bob makes per day.",
+        "action": "math",
+        "args": "18 - 9",
+        "observation": "9",
+        "parents": [
+          0,
+          1
+        ],
+        "children": [
+          3
+        ]
+      },
+      {
+        "index": 3,
+        "thought": "Finally, I should calculate the profit Bob makes per week.",
+        "action": "math",
+        "args": "9 * 7",
+        "observation": "63",
+        "parents": [
+          2
+        ],
+        "children": [
+          4
+        ]
+      },
+      {
+        "index": 4,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "63",
+        "observation": "",
+        "parents": [
+          3
+        ],
+        "children": []
+      }
+    ]
+    ````
+  hotpotqa: |
+    ## Example 1
+
+    Query: Who wrote the book on which a musical was based which featured the song She Used to Be Mine?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "I need to find the book on which a musical was based that featured the song \"She Used to Be Mine.\"",
+        "action": "search",
+        "args": "book on which musical featuring the song \"She Used to Be Mine\" is based",
+        "observation": "Waitress the Musical - Mac Huff : She Used To Be Mine (from Waitress the Musical) ...",
+        "parents": [],
+        "children": [
+          1
+        ]
+      },
+      {
+        "index": 1,
+        "thought": "The musical featuring the song \"She Used to Be Mine\" is Waitress. Now I need to find out who wrote the book on which the musical is based.",
+        "action": "search",
+        "args": "author of the book Waitress the Musical is based on",
+        "observation": "Jessie Nelson - Waitress is a musical with music and lyrics by Sara Bareilles and a book by Jessie Nelson. ...",
+        "parents": [
+          0
+        ],
+        "children": [
+          2
+        ]
+      },
+      {
+        "index": 2,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "Jessie Nelson",
+        "observation": "",
+        "parents": [
+          1
+        ],
+        "children": []
+      }
+    ]
+    ```
+
+    ## Example 2
+
+    Query: Which tennis player won more Grand Slam titles, Henri Leconte or Jonathan Stark?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "I need to search the number of Grand Slam titles won by Henri Leconte and Jonathan Stark, then compare them to find out who won more.",
+        "action": "search",
+        "args": "Grand Slam titles won by Henri Leconte",
+        "observation": "0",
+        "parents": [],
+        "children": [
+          2
+        ]
+      },
+      {
+        "index": 1,
+        "thought": "Henri Leconte has not won any Grand Slam titles. I need to search for Jonathan Stark's Grand Slam titles.",
+        "action": "search",
+        "args": "Grand Slam titles won by Jonathan Stark",
+        "observation": "two Grand Slam doubles",
+        "parents": [],
+        "children": [
+          2
+        ]
+      },
+      {
+        "index": 2,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "Jonathan Stark",
+        "observation": "",
+        "parents": [
+          0,
+          1
+        ],
+        "children": []
+      }
+    ]
+    ```
+
+    ## Example 3
+
+    Query: What quarterback for the Atlanta Falcons did Baker Mayfield win the starting job at Oklahoma over?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "I need to find out the quarterback for the Atlanta Falcons that Baker Mayfield won the starting job at Oklahoma over.",
+        "action": "search",
+        "args": "quarterback for the Atlanta Falcons that Baker Mayfield won the starting job at Oklahoma over",
+        "observation": "Baker Reagan Mayfield (born April 14, 1995) is an American football quarterback for the Tampa Bay Buccaneers ...",
+        "parents": [],
+        "children": []
+      },
+      {
+        "index": 1,
+        "thought": "The search result did not provide the information I needed. I should try a different search query.",
+        "action": "search",
+        "args": "quarterback competition at Oklahoma involving Baker Mayfield",
+        "observation": "22 août 2023 — Mayfield has been in a quarterback competition with former Florida standout Kyle Trask ...",
+        "parents": [],
+        "children": []
+      },
+      {
+        "index": 2,
+        "thought": "The search result still does not provide the specific information I need. I should try a different approach.",
+        "action": "search",
+        "args": "Baker Mayfield starting job competition at Oklahoma",
+        "observation": "2015 season On August 24, 2015, Mayfield was named the starting quarterback for the Sooners after winning an open quarterback competition against Trevor Knight.",
+        "parents": [],
+        "children": [
+          3
+        ]
+      },
+      {
+        "index": 3,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "Trevor Knight",
+        "observation": "",
+        "parents": [
+          2
+        ],
+        "children": []
+      }
+    ]
+    ```

@@ -1,0 +1,52 @@
+# @package meta_agent
+type: fh
+
+max_steps: 30
+max_retries: 8
+
+llm_provider: default
+# Interpolate model config from the selected 'model' group
+model: ${model}
+
+use_builtin_tool_input: false
+tool_formatter_id: json
+
+generation:
+    plan:  # Initial plan generation
+        response_format:
+            type: json_schema
+            json_schema:
+                name: plan
+                schema:
+                    type: object
+                    properties:
+                        steps:
+                            type: array
+                            items:
+                                type: object
+                                properties:
+                                    index:
+                                        type: integer
+                                        description: "Step index (0-indexed)"
+                                        minimum: 0
+                                    action:
+                                        type: object
+                                        properties:
+                                            name:
+                                                type: string
+                                                description: "Tool name"
+                                            arguments:
+                                                type: object
+                                                description: "Dictionary of argument name and its value. Use $i to refer to the output of step i (0-indexed)."
+                                                additionalProperties: true
+                                        required: ["name", "arguments"]
+                                        additionalProperties: false
+                                required: ["index", "action"]
+                                additionalProperties: false
+                    required: ["steps"]
+                    additionalProperties: false
+                strict: true
+        tool_schema_path: ["json_schema", "schema", "properties", "steps", "items", "properties", "action"]
+        step_index_path: ["json_schema", "schema", "properties", "steps", "items", "properties", "index"]
+
+        num_demonstrations: ${num_demonstrations}

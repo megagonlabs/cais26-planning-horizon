@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+    - /meta_agent: sh.json.v1
+    - /env: multiobj/hotpotqa/v1
+
+# Dataset-specific prompts
+meta_agent:
+    generation:
+        plan_step:
+            system: |
+                Use the available tools to answer the user's question step by step, generating one action at a time. Use $i to refer to the output of step i (0-indexed).
+
+                **Tools**
+                {tool_definitions}
+
+                **Examples**
+                {demonstrations}
+            user: "Question: {query}"
+
+experiment:
+    dataset_id: "multiobj/hotpotqa"
+    subset: null
+    split: "train"

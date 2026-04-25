@@ -1,0 +1,4 @@
+api_type: chat
+model: accounts/fireworks/models/qwen3-235b-a22b-instruct-2507
+temperature: 0
+max_completion_tokens: 10000

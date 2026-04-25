@@ -1,0 +1,35 @@
+defaults:
+    - _self_
+    - model: gpt-4p1-mini.v1
+    - model@worker_model: gpt-4p1-mini.v1
+    - experiment: multiobj/hotpotqa/sh.v1
+
+# Runtime arguments
+num_episodes: null
+workers: 1
+debug: false
+
+# Meta-agent configuration
+num_demonstrations: 10
+
+llm_providers:
+    default:
+        type: openai
+        api_key_env: OPENAI_API_KEY
+    openai:
+        type: openai
+        api_key_env: OPENAI_API_KEY
+    fireworks:
+        type: fireworks
+        api_key_env: FIREWORKS_API_KEY
+        base_url: https://api.fireworks.ai/inference/v1
+    vertexai-openai:
+        type: vertexai-openai
+        project_id_env: GOOGLE_CLOUD_PROJECT
+        location_env: GOOGLE_CLOUD_LOCATION
+
+hydra:
+    run:
+        dir: results/${experiment.dataset_id}/${experiment.split}/${basename:${hydra:runtime.choices.experiment}}___${basename:${meta_agent.model.model}}___demonstrations-${num_demonstrations}___retries-${meta_agent.max_retries}/${now:%Y-%m-%d-%H-%M-%S}
+    job:
+        chdir: false

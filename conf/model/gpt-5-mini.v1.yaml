@@ -1,0 +1,5 @@
+api_type: responses
+model: gpt-5-mini-2025-08-07
+temperature: 1.0
+max_completion_tokens: 10000
+reasoning_effort: medium

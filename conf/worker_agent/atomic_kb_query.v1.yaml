@@ -1,0 +1,19 @@
+# Atomic KB Query Agents configuration
+# Version 1.0
+# Factory-based configuration for all atomic KB query tools
+#
+# Architecture:
+# - One agent per atomic operator (extract_entity, find_relation, merge, order, etc.)
+# - Factory pattern with shared resources (schema, embeddings)
+# - Dataset-agnostic: dataset name/config passed via task_config at execution time
+# - Compositional: agents read/update function_list in metadata
+
+type: atomic_kb_query_agents
+
+# Common configuration for all atomic KB query worker agents
+common_parameters:
+    # Path to schema resources (relation lists, etc.)
+    schema_resources_path: "data/atomic_kbqa/freebase/"
+
+    # Embedding model for schema grounding
+    embedding_model_name: "BAAI/bge-base-en-v1.5"

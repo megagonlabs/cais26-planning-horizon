@@ -1,0 +1,10 @@
+api_type: chat
+model: google/gemini-3-flash-preview
+temperature: 0.0
+max_tokens: 10000
+seed: 42
+extra_body:
+    google:
+        thinking_config:
+            include_thoughts: true
+            thinking_level: MEDIUM

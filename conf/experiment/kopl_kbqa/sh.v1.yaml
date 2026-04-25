@@ -1,0 +1,34 @@
+# @package _global_
+defaults:
+    - /meta_agent: sh.json.v1
+    - /env: kopl_kbqa/v1
+
+# Dataset-specific prompts
+meta_agent:
+    generation:
+        plan_step:
+            system: |
+                Use the available tools to answer the user's question step by step, generating one action at a time. Use $i to refer to the output of step i (0-indexed).
+
+                **Tools**
+                {tool_definitions}
+
+                You can access the knowledge base through the provided tools.
+
+                **Glossary of KB concepts:**
+                - Entity: The most basic item in KB.
+                - Concept: The abstraction of a set of entities, e.g., basketball player.
+                - Relation: The link between entities or concepts. Entities are linked to concepts via the relation instance of. Concepts are organized into a tree structure via relation subclass of.
+                - Attribute: The literal information of an entity. An attribute has a key and a value, which is one of four types: string, number, date, and year. The number value can have an extra unit, e.g., 206 centimetre.
+                - Relational knowledge: The triple with form (entity, relation, entity), e.g., (LeBron James Jr., father, LeBron James).
+                - Literal knowledge: The triple with form (entity, attribute key, attribute value), e.g., (LeBron James, height, 206 centimetre).
+                - Qualifier knowledge: The triple whose head is a relational or literal triple, e.g., ((LeBron James, drafted by, Cleveland Cavaliers), point in time, 2003). A qualifier also has a key and a value.
+
+                **Examples**
+                {demonstrations}
+            user: "Question: {query}"
+
+experiment:
+    dataset_id: "kopl_kbqa/kqa_pro"
+    subset: null
+    split: "train"

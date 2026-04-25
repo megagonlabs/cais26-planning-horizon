@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+    - /experiment/atomic_kbqa/sh.v1
+    - _self_
+
+environment:
+    agents:
+        atomic_kb_query_agents:
+            common_parameters:
+                retrieval_topk: 1 # Set retrieval top-k to 1
+                strict_mode: true # Enable strict mode for schema grounding

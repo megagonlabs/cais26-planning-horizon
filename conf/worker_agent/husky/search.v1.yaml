@@ -1,0 +1,68 @@
+# @package _group_
+type: "husky_search_agent"
+prompt:
+    generation:
+        system: |
+            Given the input question, the solution history that consists of steps for solving the input question and their corresponding outputs (optional), and the current sub-question that needs to be answered to solve the question, write a concise, informative Search query for obtaining information regarding the given sub-question.
+        user: |
+            **Question:**
+            {query}
+
+            **History:**
+            {history}
+
+            Write a concise, informative search query for obtaining information regarding the following sub-question.
+
+            **Sub-question:**
+            {sub_question}
+    synthesis:
+        system: |
+            Given the search question and the result, use only the information from the search result to answer the search question concisely. Exclude any details that are not directly relevant to the question.
+
+            Your task:
+            1. Provide a short summary of the reasoning process used to arrive at the answer. Examine if the provided information is sufficient to fully and directly answer the question.
+            2. Provide the concise answer value without verbose expressions like "The answer to <question> is...".
+            3. Indicate whether the found answer fully and directly addresses the question.
+            4. If the answer does not fully and directly address the question, provide the reason for failure. For example:
+                - "No supporting information found in the search result: <short_details>" (when the input lacks necessary details to fully answer the question)
+                - "Only partial information found in the search result: <short_details>" (when the search result contains some relevant information but not enough to fully answer the question)
+
+            ---
+            Question: Find the release date of "Harry Potter and the Sorcerer's Stone".
+            Search Result: November 16, 2001
+            Reasoning: [omitted for brevity]
+            Answer: November 16, 2001
+            Is success: True
+            ---
+            Question: Search for Lionel Messi's birthday.
+            Search Result: Lionel Andrés "Leo" Messi (Spanish pronunciation: [ljoˈnel anˈdɾes ˈmesi]; born 24 June 1987) is an Argentine professional footballer who plays as a forward for and captains both Major League Soccer club Inter Miami and the Argentina national team.
+            Reasoning: [omitted for brevity]
+            Answer: June 24, 1987
+            Is success: True
+            ---
+            Question: Find the height of Mount Baker.
+            Search Result: Baker Summit - Climbing. The most prominent feature of the Mt. Baker Wilderness is the 10,781 foot [3,286 meters] active volcano from which the wilderness takes its name.
+            Reasoning: [omitted for brevity]
+            Answer: 10,781 feet
+            Is success: True
+            ---
+            Question: Identify who the fourteenth President of the United States is.
+            Search Result: Franklin Pierce became 14th President of the United States at a time of apparent tranquility (1853-1857). By pursuing the recommendations of southern advisers, Pierce — a New Englander — hoped to ease the divisions that led eventually to Civil War. Franklin Pierce became President at a time of apparent tranquility.
+            Reasoning: [omitted for brevity]
+            Answer: Franklin Pierce
+            Is success: True
+            ---
+            Question: What is the population of France in 2024?
+            Search Result: As of January 1, 2022, the estimated population of France is approximately 67.5 million people.
+            Answer: Unknown
+            Is success: False
+            Failure reason: No supporting information found in the search result: the result only provide population data in 2022, not 2024.
+            ---
+        user: |
+            Only use the information from the search result to answer the question concisely. If the search result does not contain relevant information, respond with "No supporting information found in the search result: <short details>".
+
+            **Question:**
+            {query}
+
+            **Search Result:**
+            {response}

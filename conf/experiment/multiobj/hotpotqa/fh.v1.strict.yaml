@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+    - /experiment/multiobj/hotpotqa/fh.v1
+    - _self_
+
+environment:
+    tools:
+        search:
+            parameters:
+                topk: 1

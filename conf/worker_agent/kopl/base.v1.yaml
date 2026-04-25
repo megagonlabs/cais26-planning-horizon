@@ -1,0 +1,5 @@
+# KoPL Agents configuration
+# Version 1.0
+# Factory-based configuration for all KoPL operators
+
+type: kopl_agent

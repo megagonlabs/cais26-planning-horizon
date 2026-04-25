@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+    - /experiment/kopl_kbqa/fh.v1
+    - _self_
+
+environment:
+    agents:
+        kopl_find_and_filter_concept_agents:
+            common_parameters:
+                retrieval_topk: 1
+                strict_mode: true  # Enable strict mode for schema grounding
+        kopl_key_only_agents:
+            common_parameters:
+                retrieval_topk: 1
+                strict_mode: true  # Enable strict mode for schema grounding
+        kopl_key_and_value_agents:
+            common_parameters:
+                retrieval_topk: 1
+                strict_mode: true  # Enable strict mode for schema grounding

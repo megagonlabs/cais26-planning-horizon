@@ -1,0 +1,5 @@
+# KoPL Find and FilterConcept Agents configuration
+# Version 1.0
+# Factory-based configuration for KoPL find and filter_concept operators
+
+type: "kopl_find_and_filter_concept_agent"

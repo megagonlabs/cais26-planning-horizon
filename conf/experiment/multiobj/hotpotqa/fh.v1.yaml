@@ -1,0 +1,34 @@
+# @package _global_
+defaults:
+    - /meta_agent: fh.json.v1
+    - /env: multiobj/hotpotqa/v1
+
+meta_agent:
+    # Generation configuration
+    generation:
+        plan: # Initial plan generation
+            system: |
+                Use the available tools to answer the user's question step by step, generating the entire plan. Use $i to refer to the output of step i (0-indexed).
+
+                **Tools**
+                {tool_definitions}
+
+                Use the available tools to answer the user's question step by step
+
+                **Examples**
+                {demonstrations}
+            user: "Question: {query}"
+
+        revision: # Plan revision
+            user: |
+                Execution Result:
+                {execution_result}
+
+                The last step returned an error or no results. Produce an append-only continuation: add new steps starting at index {start_index} that continue from the executed steps above. Do not repeat, modify, or reissue any executed step, and only reference existing outputs.
+
+                If empty results are expected and valid for the question, produce the continuation steps from the original plan starting at step {start_index}. Otherwise, add corrective steps starting at {start_index} (e.g., adjust tool parameters, or try alternative tools) and proceed toward the answer.
+
+experiment:
+    dataset_id: "multiobj/hotpotqa"
+    subset: null
+    split: "train"

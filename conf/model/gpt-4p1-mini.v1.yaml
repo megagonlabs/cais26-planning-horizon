@@ -1,0 +1,5 @@
+api_type: chat
+model: gpt-4.1-mini-2025-04-14
+temperature: 0.0
+max_completion_tokens: 10000
+seed: 42

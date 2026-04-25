@@ -1,0 +1,5 @@
+# KoPL Key-and-Value Agents configuration
+# Version 1.0
+# Factory-based configuration for KoPL key-and-value operators
+
+type: "kopl_key_and_value_agent"

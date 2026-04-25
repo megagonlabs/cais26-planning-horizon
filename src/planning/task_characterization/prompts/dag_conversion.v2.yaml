@@ -1,0 +1,302 @@
+base_prompt: |
+  You will be provided the user query (a problem to solve) and the reasoning steps taken to arrive at the solution. Annotate links between reasoning steps to create a Directed Acyclic Graph (DAG), where each node represents a distinct step (reasoning/action).
+
+  # How to Annotate
+  1. Review the input query and the reasoning steps. Each step contains a thought process, an action to take, and the expected output. Treat the user query as a special source node with index -1. This node is not included in the input JSON data.
+  2. For each node, list **parents** (indices of steps this action depends on; include -1 if it depends on the input text.)
+
+  **What Counts as a Dependency**
+
+  - Include a prior step j as a parent of step i only if i.action or i.args consume data from j.observation (e.g., names, values) or i cannot execute until j completes (e.g., follow a link).
+  - If i.action/args can be formed entirely from the user query, include -1 and do not list any prior step as a parent.
+  - Thoughts do not create dependencies; only actions/args does.
+  - Provenance check for every parent: identify the word(s) in i.action/args taken from j.observation. If none, remove j (and add -1 if the user query is consulted).
+  - If i.args depend both on the user query and earlier outputs, include -1 and all relevant parents.
+  - Do not add edges just because steps are adjacent or mentioned; dependencies reflect data/ordering necessity only.
+  - Background/world knowledge that isn’t in j.observation or the user query does not create a dependency.
+
+  **Common Dependency Patterns:**
+  - Sequential: i depends on i-1.
+  - Skip-edge: i depends on a non-adjacent prior step (e.g., i depends on i-2).
+  - Parallel inputs → merge: multiple independent steps feed a single step that combines results.
+  - Fan-out: one step’s output used by multiple later steps.
+  - Branching with unused/failed paths: steps that are explored but not used end up as leaves (not appearing in any node's parents).
+  - Final answer node: typically depends on one or more prior computed results (and sometimes -1 if it re-reads the input).
+
+  **Validation:**
+  - Acyclic: edges only from lower to higher indices; no self-edges.
+  - Indices: unique, contiguous 0..n-1; listed in index order.
+  - Parent requirement: every node has ≥1 parent; use -1 when a node reads the user query.
+  - Final node: parents are exactly the steps whose outputs compose the answer; add -1 only if the query is reread.
+
+  **Output Format:**
+  Produce a JSON array, one object per node (in order by `index`), including:
+  - `index` (integer, required)
+  - `thought` (string, optional)
+  - `action` (string, optional)
+  - `args` (string, optional)
+  - `observation` (string, optional)
+  - `parents` (array of integers, required)
+
+  # Example Outputs
+
+  {examples}
+
+  # Tips
+  - Use -1 in "parents" on any node whose args/action read the user query (at any point). If both query and prior outputs are used, include both.
+  - Don't add edges from thoughts or adjacency—only when i.action/args consume j.observation or require j to finish (e.g., follow link).
+  - Mark abandoned/failed steps as leaves (not appearing in any node's parents).
+
+  {additional_instructions}
+examples:
+  gsm8k: |
+    ## Example 1
+
+    Query: John volunteers at a shelter twice a month for 3 hours at a time.  How many hours does he volunteer per year?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "First, I should calculate the number of times John volunteers in a year.",
+        "action": "math",
+        "args": "2 * 12",
+        "observation": "24",
+        "parents": [-1]
+      },
+      {
+        "index": 1,
+        "thought": "Now, I should calculate the total number of hours John volunteers in a year.",
+        "action": "math",
+        "args": "24 * 3",
+        "observation": "72",
+        "parents": [-1, 0]
+      },
+      {
+        "index": 2,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "72",
+        "observation": "",
+        "parents": [1]
+      }
+    ]
+    ````
+
+    ## Example 2
+
+    Query: Betty is planning to host her friends over for a party. She buys drinks, cakes, and ice creams at a unit cost of $2, $10, and $5 respectively. How much does she spend if she buys 10 drinks, 5 cakes, and 100 ice creams?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "First, I should calculate the amount Betty spends on buying drinks.",
+        "action": "math",
+        "args": "2 * 10",
+        "observation": "20",
+        "parents": [-1]
+      },
+      {
+        "index": 1,
+        "thought": "Next, I should calculate the amount Betty spends on buying cakes.",
+        "action": "math",
+        "args": "10 * 5",
+        "observation": "50",
+        "parents": [-1]
+      },
+      {
+        "index": 2,
+        "thought": "Lastly, I should calculate the amount Betty spends on buying ice creams.",
+        "action": "math",
+        "args": "5 * 100",
+        "observation": "500",
+        "parents": [-1]
+      },
+      {
+        "index": 3,
+        "thought": "Now, I should calculate the total amount Betty spends.",
+        "action": "math",
+        "args": "20 + 50 + 500",
+        "observation": "570",
+        "parents": [0, 1, 2]
+      },
+      {
+        "index": 4,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "570",
+        "observation": "",
+        "parents": [3]
+      }
+    ]
+
+    ## Example 3
+
+    Query: Bob orders a dozen muffins a day for $0.75 each and sells them for $1.5 each.  How much profit does he make a week?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "First, I should calculate the cost of buying a dozen muffins for Bob.",
+        "action": "math",
+        "args": "12 * 0.75",
+        "observation": "9",
+        "parents": [-1]
+      },
+      {
+        "index": 1,
+        "thought": "Now, I should calculate the revenue from selling a dozen muffins for Bob.",
+        "action": "math",
+        "args": "12 * 1.5",
+        "observation": "18",
+        "parents": [-1]
+      },
+      {
+        "index": 2,
+        "thought": "Next, I should calculate the profit Bob makes per day.",
+        "action": "math",
+        "args": "18 - 9",
+        "observation": "9",
+        "parents": [0, 1]
+      },
+      {
+        "index": 3,
+        "thought": "Finally, I should calculate the profit Bob makes per week.",
+        "action": "math",
+        "args": "9 * 7",
+        "observation": "63",
+        "parents": [-1, 2]
+      },
+      {
+        "index": 4,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "63",
+        "observation": "",
+        "parents": [3]
+      }
+    ]
+    ````
+  hotpotqa: |
+    ## Example 1
+
+    Query: The author of the 2004 book How to Talk to a Liberal (If You Must) was born in what year?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "I need to search for the author of the book \"How to Talk to a Liberal (If You Must)\" and find out their birth year.",
+        "action": "search",
+        "args": "author of the book \"How to Talk to a Liberal (If You Must)\"",
+        "observation": "How to Talk to a Liberal (If You Must) is a 2004 book by Ann Coulter.",
+        "parents": [-1]
+      },
+      {
+        "index": 1,
+        "thought": "The author of the book \"How to Talk to a Liberal (If You Must)\" is Ann Coulter. Now I need to find out her birth year.",
+        "action": "search",
+        "args": "Ann Coulter birth year",
+        "observation": "Ann Hart Coulter was born on December 8, 1961, in New York City, ...",
+        "parents": [0]
+      },
+      {
+        "index": 2,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "1961",
+        "observation": "",
+        "parents": [1]
+      }
+    ]
+    ```
+
+    ## Example 2
+
+    Query: Which tennis player won more Grand Slam titles, Henri Leconte or Jonathan Stark?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "I need to search the number of Grand Slam titles won by Henri Leconte and Jonathan Stark, then compare them to find out who won more.",
+        "action": "search",
+        "args": "Grand Slam titles won by Henri Leconte",
+        "observation": "0",
+        "parents": [-1]
+      },
+      {
+        "index": 1,
+        "thought": "Henri Leconte has not won any Grand Slam titles. I need to search for Jonathan Stark's Grand Slam titles.",
+        "action": "search",
+        "args": "Grand Slam titles won by Jonathan Stark",
+        "observation": "two Grand Slam doubles",
+        "parents": [-1]
+      },
+      {
+        "index": 2,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "Jonathan Stark",
+        "observation": "",
+        "parents": [0, 1]
+      }
+    ]
+    ```
+
+    ## Example 3
+
+    Query: Kooikers appeared in the paintings of a Dutch painter whose works are known for their abundance of what?
+
+    Expected Output:
+    ```json
+    [
+      {
+        "index": 0,
+        "thought": "I need to find the Dutch painter whose works feature Kooikers and are known for their abundance of something.",
+        "action": "search",
+        "args": "Dutch painter Kooikers",
+        "observation": "Kooikers were popular in the 17th and 18th century and appear in the paintings of Rembrandt, Gerard ter Borch, and Jan Steen.",
+        "parents": [-1]
+      },
+      {
+        "index": 1,
+        "thought": "I have multiple painters to consider - Rembrandt, Gerard ter Borch, and Jan Steen. I need to find out which painter's works are known for their abundance of something.",
+        "action": "search",
+        "args": "Rembrandt paintings abundance",
+        "observation": "Sometimes he used an abundance of paint, ...",
+        "parents": [0]
+      },
+      {
+        "index": 2,
+        "thought": "The search results for Rembrandt's paintings and abundance are not providing a clear answer. I should try searching for Gerard ter Borch and Jan Steen instead.",
+        "action": "search",
+        "args": "Gerard ter Borch paintings abundance",
+        "observation": "The Gallant Conversation is ... abundant feathers in the soldier's cap, but this ...",
+        "parents": [0]
+      },
+      {
+        "index": 3,
+        "thought": "... This might be the answer I'm looking for. I should confirm by searching for Jan Steen's paintings as well.",
+        "action": "search",
+        "args": "Jan Steen paintings abundance",
+        "observation": "His works are known for their psychological insight, sense of humour and abundance of colour.",
+        "parents": [0]
+      },
+      {
+        "index": 4,
+        "thought": "Final Answer",
+        "action": "finish",
+        "args": "colour",
+        "observation": "",
+        "parents": [3]
+      }
+    ]
+    ```

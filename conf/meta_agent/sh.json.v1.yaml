@@ -1,0 +1,41 @@
+# @package meta_agent
+type: sh
+
+max_steps: 30
+max_retries: 8
+
+llm_provider: default
+# Interpolate model config from the selected 'model' group
+model: ${model}
+
+use_builtin_tool_input: false
+use_builtin_tool_output: false
+tool_formatter_id: json
+
+generation:
+    plan_step:
+        response_format:
+            type: json_schema
+            json_schema:
+                name: step
+                schema:
+                    type: object
+                    properties:
+                        action:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                    description: "Tool name"
+                                arguments:
+                                    type: object
+                                    description: "Dictionary of argument name and its value. Use $i to refer to the output of step i (0-indexed)."
+                                    additionalProperties: true
+                            required: ["name", "arguments"]
+                            additionalProperties: false
+                    required: ["action"]
+                    additionalProperties: false
+                strict: true
+        tool_schema_path: ["json_schema", "schema", "properties", "action"]
+
+        num_demonstrations: ${num_demonstrations}
