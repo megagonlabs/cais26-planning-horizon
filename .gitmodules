@@ -1,0 +1,3 @@
+[submodule "vendor/KBQA-o1"]
+	path = vendor/KBQA-o1
+	url = https://github.com/LHRLAB/KBQA-o1.git
