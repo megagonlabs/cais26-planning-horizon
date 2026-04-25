@@ -79,6 +79,20 @@ If you use this repository, please cite the paper:
 }
 ```
 
+## Used Datasets
+
+All datasets used in this repository are listed below (including their copyright holders and the license information). We modify the datasets to run with our system but do not redistribute the datasets themselves.
+
+| ID  | OSS Component Name | Modified | Copyright Holder | Upstream Link | License  |
+|-----|----------------------------------|----------|------------------|-----------------------------------------------------------------------------------------------------------|--------------------|
+| 1 | KQA Pro | Yes | Cao et al. (Tsinghua University) | [link](https://huggingface.co/datasets/drt/kqa_pro) | MIT License |
+| 2 | GrailQA | Yes | Gu et al. (Ohio State University) | [link](https://dki-lab.github.io/GrailQA/) | CC BY-SA 4.0 License |
+| 3 | WebQSP | Yes | Matt Richardson, Scott Wen-tau Yih (Microsoft) | [link](https://dki-lab.github.io/GrailQA/) | Unspecified |
+| 4 | GraphQ | Yes | Su et al. (UC Santa Barbara) | [link](https://github.com/dki-lab/GrailQA/tree/main/data) | CC BY-SA 4.0 License |
+| 5 | HotpotQA | Yes | Yang et al. (Stanford University) | [link](https://hotpotqa.github.io/) | CC BY-SA 4.0 License |
+| 6 | Wikipedia | No |  | [link](https://hotpotqa.github.io/wiki-readme.html) | CC BY-SA 4.0 License |
+| 7 | Freebase | No |  | [link](https://github.com/dki-lab/Freebase-Setup) | CC BY 2.5 License |
+
 ## Contact
 
 For questions about the code release, please open an issue in this repository.
