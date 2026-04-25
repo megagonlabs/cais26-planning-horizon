@@ -9,24 +9,12 @@ The core finding is that, for well-defined data-centric tasks, FH planning
 with lazy replanning can match SH planning while using substantially fewer
 tokens.
 
-## Repository guide
-
-| Path | What it contains | Pointers |
-| --- | --- | --- |
-| `src/planning/agents/` | Meta agents, worker agents, shared agent abstractions | `agents/base_agent.py`, `agents/meta_agents/meta_sh.py`, `agents/meta_agents/meta_fh.py`, `agents/worker_agents/` |
-| `planning/environment/` | Environment orchestration and executable registries | `environment/environment.py`, `environment/agent_registry.py`, `environment/tool_registry.py` |
-| `planning/services/` | LLM provider integrations and routing | `services/llm_registry.py`, `services/openai.py`, `services/vllm.py`, `services/vertexai_openai.py` |
-| `planning/tools/` | Task-specific tool implementations and wrappers | See source package and tool docs linked from `docs/system-design.md` |
-| `conf/` | Hydra configurations by dataset and planner setup | Example: `conf/experiment/kopl_kbqa/` |
-| `scripts/` | Entry points for single runs and batch experiments | `scripts/example_run_kqa_pro.py`, `scripts/run.py` |
-| `docs/system-design.md` | Main entry point for system documentation | Start here for architecture and follow-on docs |
-
 ## Setup
 
-- Code setup: [`docs/setup/code.md`](docs/setup/code.md)
-- Data setup: [`docs/setup/data.md`](docs/setup/data.md)
 - Environment variables: copy [`.env.example`](.env.example) to `.env` and
   fill in only the providers and tools you plan to use.
+- Code setup: [`docs/setup/code.md`](docs/setup/code.md)
+- Data setup: [`docs/setup/data.md`](docs/setup/data.md)
 
 ## Environment
 
@@ -44,11 +32,7 @@ The experiments in the paper were run on the following environment.
 - **KoPL/KQA-Pro and atomic KBQA**: ≥10 GB RAM, ≥20 GB disk
 - **Multi-hop HotpotQA**: ≥10 GB RAM, ≥20 GB disk (Wikipedia dump and [Pyserini prebuilt indexes](https://github.com/castorini/pyserini/blob/master/docs/prebuilt-indexes.md))
 - **Freebase-backed experiments**: ≥100 GB RAM recommended (see [Freebase-Setup](https://github.com/dki-lab/Freebase-Setup))
-*System dependencies (atomic KBQA only):** The Freebase SPARQL executor uses `pyodbc`, which requires the `unixodbc` system library. On Linux (Ubuntu), this is bundled inside the `pyodbc` PyPI wheel and no extra step is needed. On macOS, install it separately before running `uv sync`:
-
-```bash
-brew install unixodbc
-```
+*System dependencies (atomic KBQA only):** The Freebase SPARQL executor uses `pyodbc`, which requires the `unixodbc` system library. On Linux (Ubuntu), this is bundled inside the `pyodbc` PyPI wheel and no extra step is needed. On macOS, install it separately before running `uv sync`: `brew install unixodbc`
 
 Python dependencies are listed in `pyproject.toml` and can be installed with `uv` (See `docs/setup/code.md` for instructions).
 
@@ -70,12 +54,29 @@ uv run python scripts/example_run_kqa_pro.py --problem "Who is the spouse of the
 For the fuller walkthrough, including the optional FH variant, output
 structure, and troubleshooting notes, see [`docs/walkthrough.md`](docs/walkthrough.md).
 
+## Repository guide
+
+| Path | What it contains | Pointers |
+| --- | --- | --- |
+| `src/planning/agents/` | Meta agents, worker agents, shared agent abstractions | `agents/base_agent.py`, `agents/meta_agents/meta_sh.py`, `agents/meta_agents/meta_fh.py`, `agents/worker_agents/` |
+| `planning/environment/` | Environment orchestration and executable registries | `environment/environment.py`, `environment/agent_registry.py`, `environment/tool_registry.py` |
+| `planning/services/` | LLM provider integrations and routing | `services/llm_registry.py`, `services/openai.py`, `services/vllm.py`, `services/vertexai_openai.py` |
+| `planning/tools/` | Task-specific tool implementations and wrappers | See source package and tool docs linked from `docs/system-design.md` |
+| `conf/` | Hydra configurations by dataset and planner setup | Example: `conf/experiment/kopl_kbqa/` |
+| `scripts/` | Entry points for single runs and batch experiments | `scripts/example_run_kqa_pro.py`, `scripts/run.py` |
+| `docs/system-design.md` | Main entry point for system documentation | Start here for architecture and follow-on docs |
+
 ## Citation
 
 If you use this repository, please cite the paper:
 
 ```bibtex
-# TODO
+@inproceedings{otani-etal-2026-do,
+  title     = {{Do Agents Need to Plan Step-by-Step? Rethinking Planning Horizon in Data-Centric Tool Calling}},
+  author    = {Otani, Naoki and Bhutani, Nikita and Kim, Hannah and Zhang, Dan and Hruschka, Estevam},
+  booktitle = {Proceedings of the First ACM Conference on AI and Agentic Systems (CAIS)},
+  year      = {2026},
+}
 ```
 
 ## Contact
