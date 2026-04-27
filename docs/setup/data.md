@@ -7,13 +7,7 @@ This page is the entry point for dataset setup and preprocessing.
 > [!TIP]
 > If you want one reproducible walkthrough, start with `KQA Pro`. It has the lightest end-to-end pipeline in this repository.
 
-`Atomic KBQA` and `Multi-objective HotpotQA` are fully documented below,
-but artifact evaluators are generally expected to inspect the prepared
-artifacts on this machine rather than rerun every heavy preprocessing step.
-
-Use the `Quick Start` links below for dataset-specific download and
-preprocessing entry points. Use the preprocessing guides for the
-canonical commands, expected outputs, and sanity checks.
+Use the `Quick Start` links below for dataset-specific download and preprocessing entry points. Use the preprocessing guides for the commands, expected outputs, and sanity checks.
 
 | Dataset group | Corresponding Experiments | Quick Start | Preprocessing Details |
 | --- | --- | --- | --- |

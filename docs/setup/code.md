@@ -3,11 +3,11 @@
 This guide covers all software dependencies needed to run experiments in this repository.
 Three experiment tracks exist, each requiring a different subset of setup steps:
 
-| Track | Config path | Required setup sections |
-|---|---|---|
-| KoPL KBQA (primary) | `conf/experiment/kopl_kbqa/` | §1 Base environment, §2 LLM API keys, §3 KoPL |
-| Atomic KBQA | `conf/experiment/atomic_kbqa/` | §1 Base environment, §2 LLM API keys, §4 Freebase/Virtuoso |
-| Multi-objective HotpotQA | `conf/experiment/multiobj/` | §1 Base environment, §2 LLM API keys, §5 Pyserini |
+| Track                    | Config path                    | Required setup sections                                    |
+| ------------------------ | ------------------------------ | ---------------------------------------------------------- |
+| KoPL KBQA (primary)      | `conf/experiment/kopl_kbqa/`   | §1 Base environment, §2 LLM API keys, §3 KoPL              |
+| Atomic KBQA              | `conf/experiment/atomic_kbqa/` | §1 Base environment, §2 LLM API keys, §4 Freebase/Virtuoso |
+| Multi-objective HotpotQA | `conf/experiment/multiobj/`    | §1 Base environment, §2 LLM API keys, §5 Pyserini          |
 
 > [!TIP]
 > If you want one reproducible walkthrough, start with `KoPL KBQA`. It has the lightest end-to-end code setup in this repository.
@@ -52,19 +52,17 @@ PYTHONPATH=src uv run python -c "import planning; print('OK')"
 
 ## 2. LLM API Keys
 
-LLM API keys must be stored in a `.env` file at the repository root.
-Create the file and add the relevant keys:
+LLM API keys must be stored in a `.env` file at the repository root. You can copy the provided [`.env.example`](.env.example) and fill in the keys for the providers you plan to use. Only `OPENAI_API_KEY` is required; the others are optional and only needed if you want to run experiments with those backbone LLMs.
 
 ```bash
-# cp .env.example .env # Then edit .env to add your keys
-touch .env
+cp .env.example .env # Then edit .env to add your keys
 ```
 
-| Environment variable | Provider | Models used | Required? | Where to obtain |
-|---|---|---|---|---|
-| `OPENAI_API_KEY` | OpenAI | GPT-4.1, GPT-5 | **Required** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| `FIREWORKS_API_KEY` | Fireworks AI | Qwen3-235B-Instruct | Optional | [fireworks.ai/account/api-keys](https://fireworks.ai/account/api-keys) |
-| `GOOGLE_CLOUD_PROJECT` | Google Cloud | Gemini Flash | Optional | [console.cloud.google.com](https://console.cloud.google.com/) |
+| Environment variable   | Provider     | Models used         | Required?    | Where to obtain                                                        |
+| ---------------------- | ------------ | ------------------- | ------------ | ---------------------------------------------------------------------- |
+| `OPENAI_API_KEY`       | OpenAI       | GPT-4.1, GPT-5      | **Required** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)   |
+| `FIREWORKS_API_KEY`    | Fireworks AI | Qwen3-235B-Instruct | Optional     | [fireworks.ai/account/api-keys](https://fireworks.ai/account/api-keys) |
+| `GOOGLE_CLOUD_PROJECT` | Google Cloud | Gemini Flash        | Optional     | [console.cloud.google.com](https://console.cloud.google.com/)          |
 
 Example `.env` file:
 
@@ -173,6 +171,10 @@ conn.close()
 
 A non-`None` row confirms the ODBC connection is working.
 
+### Data
+
+After verifying KoPL imports, follow [docs/setup/data.md](./data.md) to download and preprocess the KQA Pro dataset that KoPL requires.
+
 ---
 
 ## 5. Pyserini (Multi-objective HotpotQA track only)
@@ -185,10 +187,10 @@ A non-`None` row confirms the ODBC connection is working.
 
 The experiments use two prebuilt HotpotQA indexes. They are **downloaded automatically** on first run to `~/.cache/pyserini/indexes/`:
 
-| Index name | Type | Purpose |
-|---|---|---|
-| `beir-v1.0.0-hotpotqa.bge-base-en-v1.5` | FAISS (dense) | Semantic retrieval |
-| `beir-v1.0.0-hotpotqa.flat` | Lucene BM25 | Fetching full Wikipedia passage text |
+| Index name                              | Type          | Purpose                              |
+| --------------------------------------- | ------------- | ------------------------------------ |
+| `beir-v1.0.0-hotpotqa.bge-base-en-v1.5` | FAISS (dense) | Semantic retrieval                   |
+| `beir-v1.0.0-hotpotqa.flat`             | Lucene BM25   | Fetching full Wikipedia passage text |
 
 These are configured in [`conf/env/multiobj/hotpotqa/v1.yaml`](../../conf/env/multiobj/hotpotqa/v1.yaml).
 
@@ -218,3 +220,7 @@ print(hits[0].docid, hits[0].score)
 ```
 
 A printed docid and score confirm the index is functional.
+
+### Data
+
+After verifying KoPL imports, follow [docs/setup/data.md](./data.md) to download and preprocess the KQA Pro dataset that KoPL requires.

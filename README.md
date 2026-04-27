@@ -1,20 +1,29 @@
 # Do Agents Need to Plan Step-by-Step? Rethinking Planning Horizon in Data-Centric Tool Calling
 
-Official codebase for the paper *Do Agents Need to Plan Step-by-Step?
-Rethinking Planning Horizon in Data-Centric Tool Calling*.
+Official codebase for the paper *Do Agents Need to Plan Step-by-Step? Rethinking Planning Horizon in Data-Centric Tool Calling*.
 
-The project compares single-step horizon (SH) planning and full-horizon (FH)
-planning for data-centric tool-calling tasks such as KBQA and multi-hop QA.
-The core finding is that, for well-defined data-centric tasks, FH planning
-with lazy replanning can match SH planning while using substantially fewer
-tokens.
+The project compares single-step horizon (SH) planning and full-horizon (FH) planning for data-centric tool-calling tasks such as KBQA and multi-hop QA. The core finding is that, for well-defined data-centric tasks, FH planning with lazy replanning can match SH planning while using substantially fewer tokens.
 
-## Setup
+## Quick start
 
-- Environment variables: copy [`.env.example`](.env.example) to `.env` and
-  fill in only the providers and tools you plan to use.
-- Code setup: [`docs/setup/code.md`](docs/setup/code.md)
-- Data setup: [`docs/setup/data.md`](docs/setup/data.md)
+See [`docs/walkthrough.md`](docs/walkthrough.md). This walkthrough includes:
+
+1. Environment setup instructions ([Code setup](docs/setup/code.md) and [Data setup](docs/setup/data.md))
+2. A quick demo of running one KQA Pro question against the KoPL worker-agent (recommended for quick sanity check before the main run)
+3. A walkthrough of the main experiment run, including mappings between the paper and the codebase.
+
+## Repository guide
+
+See [`docs/system-design.md`](docs/system-design.md) for an overview of the system architecture and design. The codebase is organized as follows:
+
+| Path | What it contains |
+| --- | --- |
+| `src/planning/agents/` | Meta agents, worker agents, shared agent abstractions |
+| `planning/environment/` | Environment orchestration and executable registries |
+| `planning/services/` | LLM provider integrations and routing |
+| `planning/tools/` | Task-specific tool implementations and wrappers |
+| `conf/` | [Hydra](https://hydra.cc/) configurations by dataset and planner setup |
+| `scripts/` | Entry points for single runs and batch experiments |
 
 ## Environment
 
@@ -32,39 +41,44 @@ The experiments in the paper were run on the following environment.
 - **KoPL/KQA-Pro and atomic KBQA**: ≥10 GB RAM, ≥20 GB disk
 - **Multi-hop HotpotQA**: ≥10 GB RAM, ≥20 GB disk (Wikipedia dump and [Pyserini prebuilt indexes](https://github.com/castorini/pyserini/blob/master/docs/prebuilt-indexes.md))
 - **Freebase-backed experiments**: ≥100 GB RAM recommended (see [Freebase-Setup](https://github.com/dki-lab/Freebase-Setup))
-*System dependencies (atomic KBQA only):** The Freebase SPARQL executor uses `pyodbc`, which requires the `unixodbc` system library. On Linux (Ubuntu), this is bundled inside the `pyodbc` PyPI wheel and no extra step is needed. On macOS, install it separately before running `uv sync`: `brew install unixodbc`
+    - Note: The Freebase SPARQL executor uses `pyodbc`, which requires the `unixodbc` system library. On Linux (Ubuntu), this is bundled inside the `pyodbc` PyPI wheel and no extra step is needed. On macOS, install it separately by `brew install unixodbc`.
 
-Python dependencies are listed in `pyproject.toml` and can be installed with `uv` (See `docs/setup/code.md` for instructions).
+Python dependencies are listed in `pyproject.toml` and can be installed with `uv` (See [Code setup](docs/setup/code.md) for instructions).
 
-## Quick walkthrough
+**Approximate per-run usage** for the representative OpenAI settings is shown below. Values are averaged over three runs. `Atomic KBQA` averages over `GrailQA`, `GraphQ`, and `WebQSP`. The reported runtime is the total time summed across episodes, so elapsed wall-clock time can be lower when executed in parallel (for example, `10` workers can approach roughly `1/10` of the listed time).
 
-Use `scripts/example_run_kqa_pro.py` as the primary single-question demo.
+| Experiment | Planning Horizon | Model | Runtime | Prompt tokens | Completion tokens |
+| --- | --- | --- | --- | --- | --- |
+| `KoPL/KQA-Pro` | `SH` | `gpt-4p1-mini` | `2h 50m` | `111M` | `184k` |
+| `KoPL/KQA-Pro` | `SH` | `gpt-5-mini` | `18h 28m` | `90M` | `3M` |
+| `KoPL/KQA-Pro` | `FH` | `gpt-4p1-mini` | `2h 17m` | `41M` | `321k` |
+| `KoPL/KQA-Pro` | `FH` | `gpt-5-mini` | `7h 37m` | `20M` | `2M` |
+| `Atomic KBQA` | `SH` | `gpt-4p1-mini` | `3h 33m` | `10M` | `58k` |
+| `Atomic KBQA` | `SH` | `gpt-5-mini` | `6h 37m` | `9M` | `1M` |
+| `Atomic KBQA` | `FH` | `gpt-4p1-mini` | `3h 25m` | `5M` | `112k` |
+| `Atomic KBQA` | `FH` | `gpt-5-mini` | `4h 7m` | `4M` | `752k` |
+| `Multi-objective HotpotQA` | `SH` | `gpt-4p1-mini` | `9h 48m` | `32M` | `223k` |
+| `Multi-objective HotpotQA` | `SH` | `gpt-5-mini` | `64h 12m` | `51M` | `10M` |
+| `Multi-objective HotpotQA` | `FH` | `gpt-4p1-mini` | `11h 1m` | `22M` | `1M` |
+| `Multi-objective HotpotQA` | `FH` | `gpt-5-mini` | `27h 0m` | `29M` | `5M` |
 
-Before running it, complete:
+Using the current list prices (as of April 2026) for OpenAI models, the estimated cost per run is:
 
-- [Code setup](docs/setup/code.md)
-- [Data setup](docs/setup/data.md) for the `KQA Pro` track
-
-Then run one KQA Pro question against the KoPL worker-agent stack:
-
-```bash
-uv run python scripts/example_run_kqa_pro.py --problem "Who is the spouse of the actor who played Jack in Titanic?"
-```
-
-For the fuller walkthrough, including the optional FH variant, output
-structure, and troubleshooting notes, see [`docs/walkthrough.md`](docs/walkthrough.md).
-
-## Repository guide
-
-| Path | What it contains | Pointers |
+| Experiment | `gpt-4.1-mini` (I/O = $0.40/$1.60 [per 1M tokens]) | `gpt-5-mini` (I/O = $0.25/$2.00 [per 1M tokens]) |
 | --- | --- | --- |
-| `src/planning/agents/` | Meta agents, worker agents, shared agent abstractions | `agents/base_agent.py`, `agents/meta_agents/meta_sh.py`, `agents/meta_agents/meta_fh.py`, `agents/worker_agents/` |
-| `planning/environment/` | Environment orchestration and executable registries | `environment/environment.py`, `environment/agent_registry.py`, `environment/tool_registry.py` |
-| `planning/services/` | LLM provider integrations and routing | `services/llm_registry.py`, `services/openai.py`, `services/vllm.py`, `services/vertexai_openai.py` |
-| `planning/tools/` | Task-specific tool implementations and wrappers | See source package and tool docs linked from `docs/system-design.md` |
-| `conf/` | Hydra configurations by dataset and planner setup | Example: `conf/experiment/kopl_kbqa/` |
-| `scripts/` | Entry points for single runs and batch experiments | `scripts/example_run_kqa_pro.py`, `scripts/run.py` |
-| `docs/system-design.md` | Main entry point for system documentation | Start here for architecture and follow-on docs |
+| `KoPL/KQA-Pro` | about `$17`/`$45` per run (`FH`/`SH`) | about `$9`/`$23` per run (`FH`/`SH`) |
+| `Atomic KBQA` | about `$2`/`$4` per run (`FH`/`SH`) | about `$3`/`$4` per run (`FH`/`SH`) |
+| `Multi-objective HotpotQA` | about `$10`/`$13` per run (`FH`/`SH`) | about `$17`/`$33` per run (`FH`/`SH`) |
+
+Actual costs can be lower because of input token caching.
+
+## Cautions and Troubleshooting
+
+- **Minor reproducibility drift:** Exact numbers can vary slightly over time because of non-determinism in the underlying LLMs and external services.
+- **API connection errors / rate limits:** When you encounter problems like connection, first confirm that the relevant key in `.env` is valid, then retry after a short wait. If you are running multiple experiments in parallel, reduce the worker count or overall concurrency.
+- **KoPL compatibility (KQA Pro):** the `KoPL` track requires the fork at [`notani/KoPL`](https://github.com/notani/KoPL), not the upstream `THU-KEG/KoPL` repository. `uv sync` already installs the correct fork from `pyproject.toml`.
+- **Freebase / Virtuoso latency (Atomic KBQA):** If your endpoint is not responsive, follow the sanity checks in [`docs/setup/code.md`](docs/setup/code.md) and the external [`Freebase-Setup`](https://github.com/dki-lab/Freebase-Setup) guide before rerunning the experiments.
+- **Pyserini first-run failures (Multi-objective HotpotQA):** Make sure the prebuilt indexes downloaded successfully under `~/.cache/pyserini/indexes/`. Missing or partially downloaded caches cause first-run errors. See the official [`Pyserini` prebuilt-index guide](https://github.com/castorini/pyserini/blob/master/docs/prebuilt-indexes.md) for the expected cache layout and available indexes.
 
 ## Citation
 
