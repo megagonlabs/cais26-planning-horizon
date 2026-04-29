@@ -19,6 +19,10 @@ llm_providers:
     openai:
         type: openai
         api_key_env: OPENAI_API_KEY
+    vllm-local:
+        type: vllm
+        base_url: http://localhost:8000/v1/chat/completions
+        api_key: EMPTY
     fireworks:
         type: fireworks
         api_key_env: FIREWORKS_API_KEY

@@ -1,0 +1,4 @@
+api_type: chat
+model: Qwen/Qwen3-0.6B
+temperature: 0
+max_completion_tokens: 10000

@@ -6,7 +6,7 @@ scripts to avoid code duplication.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 from hydra import compose, initialize_config_dir
@@ -28,8 +28,19 @@ def _register_omegaconf_resolvers() -> None:
     )
 
 
-def _load_hydra_experiment_config(config_path: Path) -> dict[str, Any]:
-    """Compose a full experiment config from a Hydra experiment file path."""
+def _load_hydra_experiment_config(
+    config_path: Path,
+    overrides: Optional[list[str]] = None,
+) -> dict[str, Any]:
+    """Compose a full experiment config from a Hydra experiment file path.
+
+    Args:
+        config_path: Path to an experiment config under ``conf/experiment``
+        overrides: Optional Hydra override expressions
+
+    Returns:
+        dict[str, Any]: Fully resolved configuration dictionary
+    """
     project_root = Path(__file__).resolve().parents[2]
     conf_dir = project_root / "conf"
     experiment_dir = conf_dir / "experiment"
@@ -37,7 +48,10 @@ def _load_hydra_experiment_config(config_path: Path) -> dict[str, Any]:
 
     _register_omegaconf_resolvers()
     with initialize_config_dir(version_base=None, config_dir=str(conf_dir)):
-        cfg = compose(config_name="config", overrides=[f"experiment={experiment_name}"])
+        hydra_overrides = [f"experiment={experiment_name}"]
+        if overrides:
+            hydra_overrides.extend(overrides)
+        cfg = compose(config_name="config", overrides=hydra_overrides)
 
     resolved_cfg = OmegaConf.to_container(cfg, resolve=True)
     if not isinstance(resolved_cfg, dict):
@@ -45,12 +59,16 @@ def _load_hydra_experiment_config(config_path: Path) -> dict[str, Any]:
     return resolved_cfg
 
 
-def load_config(config_path: Path) -> dict[str, Any]:
+def load_config(
+    config_path: Path,
+    overrides: Optional[list[str]] = None,
+) -> dict[str, Any]:
     """
     Load configuration from a YAML file or compose a Hydra experiment config.
 
     Args:
         config_path: Path to YAML config
+        overrides: Optional Hydra override expressions for experiment configs
 
     Returns:
         dict[str, Any]: Parsed configuration dictionary
@@ -60,7 +78,13 @@ def load_config(config_path: Path) -> dict[str, Any]:
     experiment_dir = project_root / "conf" / "experiment"
 
     if config_path.is_relative_to(experiment_dir):
-        return _load_hydra_experiment_config(config_path)
+        return _load_hydra_experiment_config(config_path, overrides=overrides)
+
+    if overrides:
+        raise ValueError(
+            "Config overrides are only supported for experiment configs under "
+            f"`{experiment_dir}`."
+        )
 
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)

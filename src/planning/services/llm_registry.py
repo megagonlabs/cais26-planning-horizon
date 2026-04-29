@@ -99,6 +99,10 @@ class LLMProviderRegistry:
             kwargs["base_url"] = spec.base_url
             if api_key:
                 kwargs["api_key"] = api_key
+            if spec.timeout is not None:
+                kwargs["timeout"] = spec.timeout
+            if spec.max_retries is not None:
+                kwargs["max_retries"] = spec.max_retries
             client = vLLMClient(**kwargs)
         else:
             raise ValueError(f"Unknown provider type: {spec.type}")

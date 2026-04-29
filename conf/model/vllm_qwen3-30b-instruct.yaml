@@ -1,0 +1,4 @@
+api_type: chat
+model: Qwen/Qwen3-30B-A3B-Instruct-2507
+temperature: 0
+max_completion_tokens: 10000

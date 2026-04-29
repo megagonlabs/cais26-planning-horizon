@@ -6,7 +6,9 @@ reproducing the paper results, and understanding the system design.
 ## Setup and data guides
 
 - [`walkthrough.md`](walkthrough.md): Quick walkthrough for running a representative example with `scripts/example_run_kqa_pro.py`.
+- [`setup/code.md`](setup/code.md): Instructions for setting up the codebase, including cloning the repo, installing dependencies, and understanding the directory structure.
 - [`setup/data.md`](setup/data.md): Starting point for dataset setup and preprocessing, with `KQA Pro` as the recommended walkthrough.
+- [`setup/vllm.md`](setup/vllm.md): (Optional) Instructions for setting up and running vLLM with local LLMs.
 - [`preprocessing/kqa_pro.md`](preprocessing/kqa_pro.md): Canonical `KQA Pro` preprocessing guide.
 - [`preprocessing/atomic_kbqa.md`](preprocessing/atomic_kbqa.md): Canonical `Atomic KBQA` preprocessing guide.
 - [`preprocessing/multiobj_hotpotqa.md`](preprocessing/multiobj_hotpotqa.md): Canonical `Multi-objective HotpotQA` preprocessing guide.
