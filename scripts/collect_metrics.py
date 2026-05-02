@@ -90,6 +90,12 @@ def main() -> None:
     parser.add_argument("dataset", help="Dataset name (e.g., atomic_kbqa/graphq)")
     parser.add_argument("--split", default="test", help="Split name (e.g., train, test)")
     parser.add_argument("--eval-version", default="2.0", help="Evaluation version to consider")
+    parser.add_argument(
+        "--eval-model",
+        default="gpt-4.1-mini-2025-04-14",
+        help="Evaluator model name used in correct_answers_<model>_<version> keys "
+             "(default: gpt-4.1-mini-2025-04-14)",
+    )
     parser.add_argument("-o", "--output", help="Output CSV filename")
 
     args = parser.parse_args()
@@ -125,22 +131,15 @@ def main() -> None:
         num_trials = len(all_metrics)
 
         # Normalize metrics: add accuracy and correct_answers if not present
+        eval_key = f"correct_answers_{args.eval_model}_{args.eval_version}"
         for metrics in all_metrics:
-            for key in metrics.keys():
-                if not key.startswith("correct_answers_"):
-                    continue
-                # e.g., correct_answers_{model}_{PROMPT_VERSION}
-                if not key.endswith(f"_{args.eval_version}"):
-                    continue
-
-                metrics["correct_answers"] = metrics[key]
-                metrics["accuracy"] = metrics[key] / total_episodes
-                break
-            else:
+            if eval_key not in metrics:
                 raise ValueError(
-                    f"Method {method_name}: No correct_answers found for eval version {args.eval_version}"
-                    f" in metrics: {metrics.keys()}"
+                    f"Method {method_name}: key '{eval_key}' not found in metrics. "
+                    f"Available keys: {[k for k in metrics if k.startswith('correct_answers_')]}"
                 )
+            metrics["correct_answers"] = metrics[eval_key]
+            metrics["accuracy"] = metrics[eval_key] / total_episodes
 
         # Collect values for core metric fields to compute mean and std
         metric_fields = [
