@@ -158,29 +158,19 @@ The notebooks and scripts for Sections `4.3`, `4.4`, and `4.5` are ready to run.
 | `notebooks/sec4p5_repetitive-tool-calls.ipynb` | Section `4.5` repetitive-call discussion and case study | Ready |
 | `scripts/analyze_repetitive_tool_calls.py` | Optional CSV export for the Section `4.5` notebook | Ready |
 
-### Section `4.3` reproduction
+### Section 4.3 reproduction
 
-Use the Section `4.3` notebook when you want the logistic-regression
+Use the Section 4.3 notebook when you want the logistic-regression
 coefficients for the topological-complexity analysis.
 
 1. Open `notebooks/sec4p3_topological-complexity-analysis.ipynb` in VS Code.
-2. Run the notebook cells to inspect the Figure `3` task-space plot and the
-  inline regression tables, or rerun the standalone script below if you want to
-  regenerate the CSV outputs from the command line:
+2. Run all cells.
+3. Inspect the Figure 3 task-space plot and the inline regression tables.
 
-```bash
-uv run python scripts/reproduce_sec4p3_table3.py --output-dir results/sec4p3_table3
-```
-
-3. Inspect `results/sec4p3_table3/summary_table.csv` for the compact table and
-  `results/sec4p3_table3/detailed_coefficients.csv` for the raw coefficients,
-  p-values, and standard errors.
-
-
-### Section `4.4` reproduction
+### Section 4.4 reproduction
 
 Use `notebooks/sec4p4_tool-robustness.ipynb` when you want the low-vs-high
-robustness accuracy deltas discussed in Section `4.4`.
+robustness accuracy deltas discussed in Section 4.4.
 
 1. Open `notebooks/sec4p4_tool-robustness.ipynb` in VS Code.
 2. Run all cells.
@@ -192,10 +182,10 @@ robustness accuracy deltas discussed in Section `4.4`.
 This notebook reads the released `results/` directories directly, so no
 precomputed CSV files are required.
 
-### Section `4.5` reproduction
+### Section 4.5 reproduction
 
 Use `notebooks/sec4p5_repetitive-tool-calls.ipynb` when you want the repeated
-tool-call analysis discussed in Section `4.5`.
+tool-call analysis discussed in Section 4.5.
 
 1. Open `notebooks/sec4p5_repetitive-tool-calls.ipynb` in VS Code.
 2. Run all cells.
@@ -206,23 +196,9 @@ tool-call analysis discussed in Section `4.5`.
    - an automatically selected released case study showing an `SH` loop next to
      an `FH` run of the same question
 
-Like the Section `4.4` notebook, this notebook reads the released trajectories
+Like the Section 4.4 notebook, this notebook reads the released trajectories
 directly from `results/`.
 
-### Optional CSV export for Section `4.5`
-
-If you want a CSV copy of the repetition summary outside the notebook, run:
-
-```bash
-uv run python scripts/analyze_repetitive_tool_calls.py
-```
-
-To also save the per-episode rows that feed the summary table:
-
-```bash
-uv run python scripts/analyze_repetitive_tool_calls.py \
-  --episodes-output results/sec4p5_repetitive_tool_calls/episodes.csv
-```
 
 ## Quick sanity check before the main run
 
