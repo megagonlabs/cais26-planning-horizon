@@ -1,0 +1,67 @@
+# @package environment
+defaults:
+    - /worker_agent/kopl/base.v1@agents.kopl_schema_free_agents
+    - /worker_agent/kopl/find_and_filter_concept.v1@agents.kopl_find_and_filter_concept_agents
+    - /worker_agent/kopl/key_only.v1@agents.kopl_key_only_agents
+    - /worker_agent/kopl/key_and_value.v1@agents.kopl_key_and_value_agents
+    - _self_
+
+list_finish: false
+substitute_memory_reference: true
+
+tools:
+    # group-wise bulk registration of KoPL tools
+    kopl_schema_free_tools:
+        type: "kopl_schema_free_tools"
+        parameters:
+            kb_path: "data/kopl_kbqa/kqa_pro/kb.json"
+    kopl_find_and_filter_concept_tools:
+        type: "kopl_find_and_filter_concept_tools"
+        parameters:
+            kb_path: "data/kopl_kbqa/kqa_pro/kb.json"
+    kopl_key_only_tools:
+        type: "kopl_key_only_tools"
+        parameters:
+            kb_path: "data/kopl_kbqa/kqa_pro/kb.json"
+    kopl_key_and_value_tools:
+        type: "kopl_key_and_value_tools"
+        parameters:
+            kb_path: "data/kopl_kbqa/kqa_pro/kb.json"
+
+agents:
+    kopl_schema_free_agents:
+        llm_provider: default
+        model: ${worker_model}
+        # Use the schema-free KoPL tool set; the AgentRegistry will derive
+        # the concrete tool IDs (kopl/{operator}) from this tool set and
+        # pass them into worker agents as `tool_ids`.
+        available_tools: ["kopl_schema_free_tools"]
+        agent_per_tool: true  # Default: create one agent per tool
+        enable_schema_update_from_tool: true
+    kopl_find_and_filter_concept_agents:
+        llm_provider: default
+        model: ${worker_model}
+        available_tools: ["kopl_find_and_filter_concept_tools"]
+        agent_per_tool: true  # Default: create one agent per tool
+        enable_schema_update_from_tool: true
+        common_parameters:
+            embeddings_dir: "data/kopl_kbqa/kqa_pro/embeddings/BAAI___bge-base-en-v1.5"
+            encoder_model_name: "BAAI/bge-base-en-v1.5"
+    kopl_key_only_agents:
+        llm_provider: default
+        model: ${worker_model}
+        available_tools: ["kopl_key_only_tools"]
+        agent_per_tool: true  # Default: create one agent per tool
+        enable_schema_update_from_tool: true
+        common_parameters:
+            embeddings_dir: "data/kopl_kbqa/kqa_pro/embeddings/BAAI___bge-base-en-v1.5"
+            encoder_model_name: "BAAI/bge-base-en-v1.5"
+    kopl_key_and_value_agents:
+        llm_provider: default
+        model: ${worker_model}
+        available_tools: ["kopl_key_and_value_tools"]
+        agent_per_tool: true  # Default: create one agent per tool
+        enable_schema_update_from_tool: true
+        common_parameters:
+            embeddings_dir: "data/kopl_kbqa/kqa_pro/embeddings/BAAI___bge-base-en-v1.5"
+            encoder_model_name: "BAAI/bge-base-en-v1.5"
