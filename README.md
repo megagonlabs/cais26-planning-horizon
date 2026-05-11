@@ -82,6 +82,8 @@ Actual costs can be lower because of input token caching.
 - **Freebase / Virtuoso latency (Atomic KBQA):** If your endpoint is not responsive, follow the sanity checks in [`docs/setup/code.md`](docs/setup/code.md) and the external [`Freebase-Setup`](https://github.com/dki-lab/Freebase-Setup) guide before rerunning the experiments.
 - **Pyserini first-run failures (Multi-objective HotpotQA):** Make sure the prebuilt indexes downloaded successfully under `~/.cache/pyserini/indexes/`. Missing or partially downloaded caches cause first-run errors. See the official [`Pyserini` prebuilt-index guide](https://github.com/castorini/pyserini/blob/master/docs/prebuilt-indexes.md) for the expected cache layout and available indexes.
 
+ the expected cache layout and available indexes.
+
 ## Citation
 
 If you use this repository, please cite the paper:
@@ -94,6 +96,10 @@ If you use this repository, please cite the paper:
   year      = {2026},
 }
 ```
+
+## License
+
+This project is licensed under the BSD 3-Clause License. See [LICENSE](LICENSE).
 
 ## Used Datasets
 

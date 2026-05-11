@@ -1,10 +1,7 @@
 """Notebook-local helpers for the Section 4.3 topological analysis.
 
 This module contains the reusable computation that powers
-`sec4p3_topological-complexity-analysis.ipynb`. The CLI wrapper in
-`scripts/reproduce_sec4p3_table3.py` imports `main()` from here so the
-command-line workflow stays available without keeping notebook-specific logic
-inside `scripts/`.
+`sec4p3_topological-complexity-analysis.ipynb`.
 """
 
 from __future__ import annotations
@@ -60,10 +57,7 @@ TERM_LABELS: dict[str, str] = {
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description=(
-            "Recompute the Section 4.3 topological-complexity GEE models "
-            "from the released result bundles."
-        )
+        description=("Recompute the Section 4.3 topological-complexity GEE models from the released result bundles.")
     )
     parser.add_argument(
         "--output-dir",
@@ -121,9 +115,7 @@ def compute_paper_topology_features(
             f"finish-step adjustment. Problem rows: {bad_rows.to_dict('records')}"
         )
 
-    enriched["avg_parallelism"] = (
-        enriched["workflow_len"] / enriched["critical_path_len"]
-    )
+    enriched["avg_parallelism"] = enriched["workflow_len"] / enriched["critical_path_len"]
     return enriched
 
 
@@ -131,14 +123,7 @@ def load_atomic_features() -> pd.DataFrame:
     """Load Atomic KBQA depth/breadth features for the released test split."""
     frames: list[pd.DataFrame] = []
     for dataset in ["grailqa", "webqsp", "graphq"]:
-        path = (
-            ROOT
-            / "data"
-            / "atomic_kbqa"
-            / dataset
-            / "processed"
-            / f"{dataset}_values.v1.csv"
-        )
+        path = ROOT / "data" / "atomic_kbqa" / dataset / "processed" / f"{dataset}_values.v1.csv"
         frame = pd.read_csv(path)
         frame = frame[frame["id"].str.startswith("test_")].copy()
         frame["id"] = frame["dataset"] + "_" + frame["id"]
@@ -165,22 +150,13 @@ def load_atomic_features() -> pd.DataFrame:
 
 def load_kqa_features() -> pd.DataFrame:
     """Load KQA Pro depth/breadth features for the released evaluation split."""
-    path = (
-        ROOT
-        / "data"
-        / "kopl_kbqa"
-        / "kqa_pro"
-        / "processed"
-        / "kqa_pro_values.v1.csv"
-    )
+    path = ROOT / "data" / "kopl_kbqa" / "kqa_pro" / "processed" / "kqa_pro_values.v1.csv"
     frame = pd.read_csv(path)
     frame = frame[frame["id"].str.startswith("val_")].copy()
 
     # The released KQA Pro results still use val_* ids, but the evaluator-facing
     # docs treat this split as the paper's test set.
-    frame["id"] = "kqa_pro_" + frame["id"].str.replace(
-        "val_", "test_", regex=False
-    )
+    frame["id"] = "kqa_pro_" + frame["id"].str.replace("val_", "test_", regex=False)
     frame = compute_paper_topology_features(
         frame,
         has_finish_step=False,
@@ -209,12 +185,8 @@ def load_hotpot_features() -> pd.DataFrame:
         frame,
         has_finish_step=True,
     )
-    frame["has_bridge"] = frame["component_types"].fillna("").str.contains(
-        "bridge"
-    )
-    frame["has_comparison"] = frame["component_types"].fillna("").str.contains(
-        "comparison"
-    )
+    frame["has_bridge"] = frame["component_types"].fillna("").str.contains("bridge")
+    frame["has_comparison"] = frame["component_types"].fillna("").str.contains("comparison")
     return frame[
         [
             "id",
@@ -277,9 +249,7 @@ def load_results(dataset_group: str, result_root: Path) -> pd.DataFrame:
     for model_name, model_pattern in MODEL_PATTERNS.items():
         for method in ["itr", "pne"]:
             run_dir = pick_result_dir(split_dir, method, model_pattern)
-            timestamp_dirs = sorted(
-                path for path in run_dir.iterdir() if path.is_dir()
-            )
+            timestamp_dirs = sorted(path for path in run_dir.iterdir() if path.is_dir())
             for timestamp_dir in timestamp_dirs:
                 result_file = timestamp_dir / "result.jsonl"
                 with result_file.open() as handle:
@@ -295,10 +265,7 @@ def load_results(dataset_group: str, result_root: Path) -> pd.DataFrame:
                                 "is_sh": int(method == "itr"),
                                 "model": model_name,
                                 "is_correct": int(
-                                    item.get("evaluation", {})
-                                    .get("is_correct", "")
-                                    .lower()
-                                    == "correct"
+                                    item.get("evaluation", {}).get("is_correct", "").lower() == "correct"
                                 ),
                             }
                         )
@@ -444,9 +411,7 @@ def write_metadata(
             ),
         ],
     }
-    (output_dir / "metadata.json").write_text(
-        json.dumps(metadata, indent=2) + "\n"
-    )
+    (output_dir / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
 
 def main() -> None:
@@ -495,24 +460,19 @@ def main() -> None:
                 atomic_frame,
                 dataset_name="Atomic KBQA",
                 formula=(
-                    "is_correct ~ critical_path_len * is_sh + "
-                    "avg_parallelism * is_sh + C(dataset) + C(last_step)"
+                    "is_correct ~ critical_path_len * is_sh + avg_parallelism * is_sh + C(dataset) + C(last_step)"
                 ),
             ),
             fit_gee_models(
                 kqa_frame,
                 dataset_name="KQA Pro",
-                formula=(
-                    "is_correct ~ critical_path_len * is_sh + "
-                    "avg_parallelism * is_sh + C(last_step)"
-                ),
+                formula=("is_correct ~ critical_path_len * is_sh + avg_parallelism * is_sh + C(last_step)"),
             ),
             fit_gee_models(
                 hotpot_frame,
                 dataset_name="Mul. HotpotQA",
                 formula=(
-                    "is_correct ~ critical_path_len * is_sh + "
-                    "avg_parallelism * is_sh + has_bridge + has_comparison"
+                    "is_correct ~ critical_path_len * is_sh + avg_parallelism * is_sh + has_bridge + has_comparison"
                 ),
             ),
         ],
@@ -533,9 +493,7 @@ def main() -> None:
         categories=TERM_ORDER,
         ordered=True,
     )
-    detailed = detailed.sort_values(["dataset", "model", "term"]).reset_index(
-        drop=True
-    )
+    detailed = detailed.sort_values(["dataset", "model", "term"]).reset_index(drop=True)
 
     summary = build_summary_table(detailed)
 

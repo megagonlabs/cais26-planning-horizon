@@ -1,0 +1,22 @@
+# @package environment
+defaults:
+    - /worker_agent/atomic_kb_query.v1@agents.atomic_kb_query_agents
+    - _self_
+
+list_finish: false
+substitute_memory_reference: false  # Do not substitute memory references in tool arguments
+
+tools:
+    atomic_kb_query_tools:
+        type: "atomic_kb_query_tools"
+        parameters:
+            virtuoso_url: "http://localhost:13002/sparql"
+            virtuoso_port: 13002
+
+agents:
+    atomic_kb_query_agents:
+        llm_provider: openai
+        model: ${worker_model}
+        available_tools: ["atomic_kb_query_tools"]
+        agent_per_tool: true
+        enable_schema_update_from_tool: true

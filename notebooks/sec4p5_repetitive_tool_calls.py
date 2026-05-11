@@ -1,9 +1,6 @@
 """Notebook-local helpers for the Section 4.5 repetitive-call analysis.
 
-This module powers `sec4p5_repetitive-tool-calls.ipynb`. The CLI wrapper in
-`scripts/analyze_repetitive_tool_calls.py` imports `main()` from here so the
-optional command-line export remains available while the notebook-specific
-logic lives under `notebooks/`.
+This module powers `sec4p5_repetitive-tool-calls.ipynb`.
 """
 
 from __future__ import annotations
@@ -23,27 +20,21 @@ def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description=(
-            "Aggregate repetitive tool-call rates from the released result "
-            "bundles used by the Section 4.5 notebook."
+            "Aggregate repetitive tool-call rates from the released result bundles used by the Section 4.5 notebook."
         )
     )
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
-        default=(
-            ROOT / "results" / "sec4p5_repetitive_tool_calls" / "summary.csv"
-        ),
+        default=(ROOT / "results" / "sec4p5_repetitive_tool_calls" / "summary.csv"),
         help="Path to the output summary CSV file.",
     )
     parser.add_argument(
         "--episodes-output",
         type=Path,
         default=None,
-        help=(
-            "Optional path to write the per-episode rows used to build the "
-            "summary."
-        ),
+        help=("Optional path to write the per-episode rows used to build the summary."),
     )
     return parser.parse_args()
 
@@ -51,9 +42,7 @@ def parse_args() -> argparse.Namespace:
 def summarize_runs(episodes: pd.DataFrame) -> pd.DataFrame:
     """Aggregate the per-episode rows into one row per run."""
     run_summary = (
-        episodes.groupby(
-            ["dataset", "planner", "model", "robustness", "run_id"]
-        )
+        episodes.groupby(["dataset", "planner", "model", "robustness", "run_id"])
         .agg(
             total_episodes=("question_id", "count"),
             episodes_with_repetition=(
@@ -62,18 +51,14 @@ def summarize_runs(episodes: pd.DataFrame) -> pd.DataFrame:
             ),
             avg_repetition_when_present=(
                 "repetitive_count",
-                lambda series: float(series[series > 0].mean())
-                if (series > 0).any()
-                else 0.0,
+                lambda series: float(series[series > 0].mean()) if (series > 0).any() else 0.0,
             ),
             accuracy=("is_correct", "mean"),
         )
         .reset_index()
     )
     run_summary["episodes_with_repetition_pct"] = (
-        run_summary["episodes_with_repetition"]
-        / run_summary["total_episodes"]
-        * 100.0
+        run_summary["episodes_with_repetition"] / run_summary["total_episodes"] * 100.0
     )
     return run_summary
 
@@ -97,9 +82,7 @@ def summarize_across_runs(run_summary: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index()
     )
-    return summary.sort_values(
-        by=["robustness", "dataset", "model", "planner"]
-    )
+    return summary.sort_values(by=["robustness", "dataset", "model", "planner"])
 
 
 def print_rate_table(summary: pd.DataFrame, robustness: str) -> None:

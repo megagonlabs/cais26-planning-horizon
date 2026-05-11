@@ -10,6 +10,7 @@ This script demonstrates how to:
 Usage:
     uv run python scripts/example_run_kqa_pro.py --problem "Who is the spouse of the actor who played Jack in Titanic?"
     uv run python scripts/example_run_kqa_pro.py conf/experiment/kopl_kbqa/fh.v1.yaml --problem "Who is the spouse of the actor who played Jack in Titanic?"
+    uv run python scripts/example_run_kqa_pro.py --model-config vllm_qwen3-0p6b --llm-provider vllm-local
 """
 
 from pathlib import Path
@@ -45,6 +46,12 @@ DEFAULT_CONFIG_PATH = project_root / "conf" / "experiment" / "kopl_kbqa" / "sh.v
 DEFAULT_PROBLEM = "Who is the spouse of the actor who played Jack in Titanic?"
 DEFAULT_NUM_DEMONSTRATIONS = 0
 STREAM_POLL_INTERVAL_SECONDS = 0.1
+KQA_PRO_WORKER_AGENT_IDS = (
+    "kopl_schema_free_agents",
+    "kopl_find_and_filter_concept_agents",
+    "kopl_key_only_agents",
+    "kopl_key_and_value_agents",
+)
 
 
 def _get_model_name(config: dict[str, Any]) -> str:
@@ -67,6 +74,34 @@ def _set_example_num_demonstrations(
         generation_config = meta_generation.get(generation_key)
         if isinstance(generation_config, dict):
             generation_config["num_demonstrations"] = num_demonstrations
+
+
+def _build_config_overrides(args: argparse.Namespace) -> list[str]:
+    """Build Hydra override expressions from CLI convenience flags.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        list[str]: Hydra override expressions
+    """
+    overrides = list(args.override)
+
+    if args.model_config:
+        overrides.append(f"model={args.model_config}")
+        worker_model_config = args.worker_model_config or args.model_config
+        overrides.append(f"model@worker_model={worker_model_config}")
+    elif args.worker_model_config:
+        overrides.append(f"model@worker_model={args.worker_model_config}")
+
+    if args.llm_provider:
+        overrides.append(f"meta_agent.llm_provider={args.llm_provider}")
+        for agent_id in KQA_PRO_WORKER_AGENT_IDS:
+            overrides.append(
+                f"environment.agents.{agent_id}.llm_provider={args.llm_provider}"
+            )
+
+    return overrides
 
 
 def _collect_missing_example_prerequisites(config: dict[str, Any]) -> list[str]:
@@ -276,7 +311,14 @@ def main(args) -> None:
     print("=" * 40)
 
     print(f"Loading configuration from: {args.config_path}")
-    config = load_config(args.config_path)
+    config_overrides = _build_config_overrides(args)
+    if config_overrides:
+        print("Applying overrides:")
+        for override in config_overrides:
+            print(f"- {override}")
+        print()
+
+    config = load_config(args.config_path, overrides=config_overrides)
     agent_type = config["meta_agent"].get("type", "sh")
     print(f"Model: {_get_model_name(config)}")
     print(f"Agent: {agent_type}")
@@ -311,6 +353,37 @@ if __name__ == "__main__":
         type=Path,
         default=DEFAULT_CONFIG_PATH,
         help="Path to the experiment configuration YAML file",
+    )
+    parser.add_argument(
+        "--model-config",
+        type=str,
+        help=(
+            "Override the Hydra `model` group for the Meta Agent. When "
+            "`--worker-model-config` is omitted, this also updates the "
+            "worker model group."
+        ),
+    )
+    parser.add_argument(
+        "--worker-model-config",
+        type=str,
+        help="Override the Hydra `worker_model` group for KQA Pro worker agents",
+    )
+    parser.add_argument(
+        "--llm-provider",
+        type=str,
+        help=(
+            "Override the Meta Agent and KQA Pro worker agents to use the "
+            "specified LLM provider ID"
+        ),
+    )
+    parser.add_argument(
+        "--override",
+        action="append",
+        default=[],
+        help=(
+            "Additional Hydra override expression. Repeat this flag to pass "
+            "multiple overrides."
+        ),
     )
     parser.add_argument(
         "--problem", type=str, help="Custom problem to solve (overrides default)"

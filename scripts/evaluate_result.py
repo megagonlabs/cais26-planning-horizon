@@ -19,8 +19,9 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 import orjsonl
 
-# Add project root to path for imports
+# Add project root and src to path for imports
 project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
 
 from planning.agents.kopl_utils import (  # noqa: E402
@@ -120,7 +121,14 @@ System Output: {given_answer}
 """
 
 
-def evaluate_single(model: str, messages: list[dict], response_format: dict, index: int) -> tuple[int, dict, float]:
+def evaluate_single(
+    model: str,
+    messages: list[dict],
+    response_format: dict,
+    index: int,
+    base_url: str | None = None,
+    max_tokens: int | None = None,
+) -> tuple[int, dict, float]:
     """
     Evaluate a single entry using OpenAI's chat completion API.
 
@@ -133,6 +141,12 @@ def evaluate_single(model: str, messages: list[dict], response_format: dict, ind
             including system and user prompts.
         response_format (dict): The expected response format schema for the API call.
         index (int): The index of the entry being evaluated, used for tracking.
+        base_url (str | None): Optional OpenAI-compatible API base URL. When set,
+            uses the provided endpoint (e.g., a local vLLM server) instead of
+            the default OpenAI API.
+        max_tokens (int | None): Maximum number of tokens to generate. Useful for
+            capping output from thinking models (e.g., Qwen3) that otherwise
+            generate very long chains of thought. Defaults to None (unlimited).
 
     Returns:
         tuple[int, dict, float]: A tuple containing:
@@ -140,22 +154,26 @@ def evaluate_single(model: str, messages: list[dict], response_format: dict, ind
             - evaluation (dict): A dictionary with keys "is_correct" (str: "correct", "partially_correct", "incorrect", or "refusal/unsure"),
               "model" (str), and "prompt_version" (str).
             - cost (float): The estimated cost of the API call in USD.
-
-    Raises:
-        ValueError: If the model is not found in TOKEN_COSTS.
     """
-    # Create a local OpenAI client instance
-    local_client = openai.OpenAI()
+    # Create a local OpenAI client instance, optionally pointing to a custom endpoint
+    if base_url is not None:
+        local_client = openai.OpenAI(base_url=base_url, api_key="EMPTY")
+    else:
+        local_client = openai.OpenAI()
 
     # Make the API call to evaluate the answer
     usage = None
     try:
+        extra_kwargs: dict = {}
+        if max_tokens is not None:
+            extra_kwargs["max_tokens"] = max_tokens
         response = local_client.chat.completions.create(
             model=model,
             messages=messages,  # type: ignore
             temperature=0,  # Deterministic responses
             seed=42,  # For reproducibility
             response_format=response_format,  # type: ignore
+            **extra_kwargs,
         )
         usage = response.usage
 
@@ -179,11 +197,9 @@ def evaluate_single(model: str, messages: list[dict], response_format: dict, ind
             "prompt_version": PROMPT_VERSION,
         }
 
-    # Calculate the cost based on token usage
+    # Calculate the cost based on token usage (skipped for unknown/local models)
     cost = 0.0
-    if usage:
-        if model not in TOKEN_COSTS:
-            raise ValueError(f"Token costs not defined for model: {model}")
+    if usage and model in TOKEN_COSTS:
         input_cost_per_token = TOKEN_COSTS[model]["prompt_tokens"]
         output_cost_per_token = TOKEN_COSTS[model]["completion_tokens"]
         cost = usage.prompt_tokens * input_cost_per_token + usage.completion_tokens * output_cost_per_token
@@ -351,7 +367,7 @@ def main(args: argparse.Namespace) -> None:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_content},
         ]
-        tasks.append((args.model, messages, response_format, i))
+        tasks.append((args.model, messages, response_format, i, args.base_url, args.max_tokens))
 
     total_cost = 0.0
     if args.num_workers == 1:
@@ -443,6 +459,26 @@ if __name__ == "__main__":
         type=int,
         default=50,
         help="Number of concurrent workers for parallel evaluation.",
+    )
+    parser.add_argument(
+        "--base-url",
+        dest="base_url",
+        type=str,
+        default=None,
+        help=(
+            "Base URL for an OpenAI-compatible API endpoint "
+            "(e.g., 'http://localhost:8000/v1' for a local vLLM server). "
+            "Defaults to the official OpenAI API."
+        ),
+    )
+    parser.add_argument(
+        "--max-tokens",
+        dest="max_tokens",
+        type=int,
+        default=None,
+        help=(
+            "Maximum number of tokens to generate per evaluation call."
+        ),
     )
     # Parse arguments and run the main function
     args = parser.parse_args()

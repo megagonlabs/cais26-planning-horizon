@@ -1,0 +1,25 @@
+# @package environment
+defaults:
+    - /worker_agent/husky/commonsense.v1@agents.reasoning
+    - /worker_agent/husky/search.v1@agents.search
+    - _self_
+
+list_finish: true
+tools:
+    search:
+        type: "pyserini_prebuilt_faiss_search"
+        parameters:
+            faiss_index_name: "beir-v1.0.0-hotpotqa.bge-base-en-v1.5"
+            lucene_index_name: "beir-v1.0.0-hotpotqa.flat"
+            embed_model_name: "BAAI/bge-base-en-v1.5"
+            include_title: true
+            topk: 10
+
+agents:
+    reasoning:
+        llm_provider: openai
+        model: ${worker_model}
+    search:
+        llm_provider: openai
+        available_tools: ["search"]
+        model: ${worker_model}
