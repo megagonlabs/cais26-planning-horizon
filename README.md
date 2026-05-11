@@ -4,6 +4,8 @@ Official codebase for the paper *Do Agents Need to Plan Step-by-Step? Rethinking
 
 The project compares single-step horizon (SH) planning and full-horizon (FH) planning for data-centric tool-calling tasks such as KBQA and multi-hop QA. The core finding is that, for well-defined data-centric tasks, FH planning with lazy replanning can match SH planning while using substantially fewer tokens.
 
+Codebase DOI: [10.5281/zenodo.20116460](https://doi.org/10.5281/zenodo.20116460)
+
 ## Quick start
 
 See [`docs/walkthrough.md`](docs/walkthrough.md). This walkthrough includes:
