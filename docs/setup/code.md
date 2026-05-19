@@ -107,6 +107,16 @@ Atomic KBQA queries are executed against a local Freebase SPARQL endpoint backed
 
 ### Installation
 
+#### System packages
+
+`pyodbc` requires `libodbc.so.2` at runtime, which is not bundled in the Python wheel on Linux.
+Install it with your system package manager before proceeding:
+
+```bash
+# Ubuntu / Debian
+sudo apt-get install -y unixodbc unixodbc-dev
+```
+
 #### ODBC driver (git submodule)
 
 This codebase connects to Virtuoso via ODBC using a prebuilt driver (`virtodbc.so`) bundled in `vendor/KBQA-o1`.
