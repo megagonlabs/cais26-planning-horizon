@@ -415,7 +415,20 @@ def main(args: argparse.Namespace) -> None:
     # Update or create the metrics file in the same directory
     metrics_path = args.path_input.parent / "metrics.jsonl"
     if metrics_path.exists():
-        metrics = orjsonl.load(metrics_path)[0]  # type: ignore
+        # Read the last non-empty line, consistent with collect_metrics.py.
+        # Legacy metrics.jsonl files may have multiple lines; the final line
+        # holds the run summary (total_episodes, success_rate, etc.).
+        metrics: dict = {}
+        with open(metrics_path, "r") as f:
+            for line in reversed(f.readlines()):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    metrics = json.loads(line)
+                    break
+                except json.JSONDecodeError:
+                    continue
     else:
         metrics = {}
 

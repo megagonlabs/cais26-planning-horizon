@@ -111,7 +111,7 @@ All three wrappers default to the OpenAI `gpt-4.1-mini`, non-strict configs, the
 
 | Parameter | Default | Accepted values | Notes |
 | --- | --- | --- | --- |
-| `--llm` | `gpt-4.1-mini` | `gpt-4.1-mini`, `gpt-5-mini`, `qwen3-235b-instruct`, `gemini-flash-preview` | Applies to both the meta agent and worker agents |
+| `--llm` | `gpt-4.1-mini` | `gpt-4.1-mini`, `gpt-5-mini`, `qwen3-235b-instruct`, `gemini-flash-preview`, `vllm-qwen3-0p6b`, `vllm-qwen3-30b` | Applies to both the meta agent and worker agents. See [docs/setup/vllm.md](setup/vllm.md) for local vLLM usage and adding custom models. |
 | `--strict` | Off | flag | Uses the `*.strict` experiment config. Run without this flag for `Table 2` and with this flag for `Table 4`. |
 | `--num-episodes` | full | positive integer, `full` | Useful for sanity-check runs |
 | `--parallelism` | `1` | positive integer | Runs that many experiment processes at once |

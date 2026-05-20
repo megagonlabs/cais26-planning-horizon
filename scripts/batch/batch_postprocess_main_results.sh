@@ -4,8 +4,13 @@ set -euo pipefail
 
 DEFAULT_SPLIT="test"
 DEFAULT_OUTPUT_DIR="tables/reproduction"
+DEFAULT_EVAL_MODEL="gpt-4.1-mini-2025-04-14"
 SKIP_EVAL=false
 
+EVAL_MODEL="$DEFAULT_EVAL_MODEL"
+BASE_URL=""
+MAX_TOKENS=""
+declare -a EVAL_ARGS=()
 declare -a DATASETS=()
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,6 +33,12 @@ Options:
                        Default: ${DEFAULT_OUTPUT_DIR}
   --skip-eval          Skip the soft-evaluation pass and only collect metrics.
                        Useful when the results were already evaluated.
+  -m, --model MODEL    Evaluator model name.
+                       Default: ${DEFAULT_EVAL_MODEL}
+  --base-url URL       Base URL for an OpenAI-compatible API endpoint.
+                       Use with a local vLLM server, e.g. http://localhost:8000/v1
+                       (see docs/setup/vllm.md).
+  --max-tokens N       Maximum tokens per evaluation call.
   -h, --help           Show this message.
 
 Datasets:
@@ -41,6 +52,8 @@ Datasets:
 Examples:
   bash scripts/batch/batch_postprocess_main_results.sh
   bash scripts/batch/batch_postprocess_main_results.sh --skip-eval kopl_kbqa/kqa_pro
+  bash scripts/batch/batch_postprocess_main_results.sh \\
+    -m Qwen/Qwen3-0.6B --base-url http://localhost:8000/v1 --max-tokens 1024
 EOF
 }
 
@@ -81,6 +94,30 @@ parse_args() {
             --skip-eval)
                 SKIP_EVAL=true
                 shift
+                ;;
+            -m|--model)
+                if (($# < 2)); then
+                    echo "Error: --model requires a value." >&2
+                    exit 1
+                fi
+                EVAL_MODEL="$2"
+                shift 2
+                ;;
+            --base-url)
+                if (($# < 2)); then
+                    echo "Error: --base-url requires a value." >&2
+                    exit 1
+                fi
+                BASE_URL="$2"
+                shift 2
+                ;;
+            --max-tokens)
+                if (($# < 2)); then
+                    echo "Error: --max-tokens requires a value." >&2
+                    exit 1
+                fi
+                MAX_TOKENS="$2"
+                shift 2
                 ;;
             -h|--help)
                 usage
@@ -132,12 +169,13 @@ process_dataset() {
     echo "== ${dataset} =="
 
     if [[ "$SKIP_EVAL" == false ]]; then
-        bash scripts/evaluate_results.sh "$results_dir"
+        bash scripts/evaluate_results.sh "$results_dir" "${EVAL_ARGS[@]}"
     else
         echo "Skipping soft evaluation (--skip-eval)."
     fi
 
-    uv run python scripts/collect_metrics.py "$dataset" --split "$SPLIT" -o "$output_path"
+    uv run python scripts/collect_metrics.py "$dataset" --split "$SPLIT" \
+        --eval-model "$EVAL_MODEL" -o "$output_path"
     echo "Saved aggregated CSV to ${output_path}"
     echo
 }
@@ -146,6 +184,15 @@ process_dataset() {
 main() {
     cd "$REPO_ROOT"
     parse_args "$@"
+
+    # Build the argument list forwarded to evaluate_results.sh / evaluate_result.py
+    EVAL_ARGS=("-m" "$EVAL_MODEL")
+    if [[ -n "$BASE_URL" ]]; then
+        EVAL_ARGS+=("--base-url" "$BASE_URL")
+    fi
+    if [[ -n "$MAX_TOKENS" ]]; then
+        EVAL_ARGS+=("--max-tokens" "$MAX_TOKENS")
+    fi
 
     mkdir -p "$OUTPUT_DIR"
 
@@ -156,6 +203,10 @@ main() {
         echo "Mode: collect metrics only"
     else
         echo "Mode: soft evaluation + metric collection"
+        echo "Evaluator model: ${EVAL_MODEL}"
+        if [[ -n "$BASE_URL" ]]; then
+            echo "Evaluator base URL: ${BASE_URL}"
+        fi
     fi
     printf 'Datasets:\n'
     printf '  - %s\n' "${DATASETS[@]}"

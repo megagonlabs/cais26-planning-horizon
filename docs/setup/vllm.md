@@ -141,7 +141,51 @@ To make the example work, use a stronger model like [`Qwen/Qwen3-30B-A3B-Instruc
 
 ## Step 4: Run full experiments
 
-You can also run the full experiments with vLLM. For example, to run SH agent on KQA Pro:
+The batch wrapper scripts support vLLM directly. Two aliases are built in:
+
+| `--llm` value | Model config | Hugging Face model |
+| --- | --- | --- |
+| `vllm-qwen3-0p6b` | `conf/model/vllm_qwen3-0p6b.yaml` | `Qwen/Qwen3-0.6B` |
+| `vllm-qwen3-30b` | `conf/model/vllm_qwen3-30b-instruct.yaml` | `Qwen/Qwen3-30B-A3B-Instruct-2507` |
+
+For example, to run both SH and FH on KQA Pro with the 0.6B model:
+
+```bash
+bash scripts/batch/batch_exp_kqa_pro_hydra.sh --llm vllm-qwen3-0p6b --num-episodes 5
+```
+
+Both aliases assume the vLLM server is at `http://localhost:8000` (the default). To use a different host or port, update the `vllm-local` entry in `conf/config.yaml`.
+
+### Adding a custom model
+
+To add an alias for a model not listed above:
+
+**1. Create a model config** in `conf/model/`, e.g. `conf/model/vllm_my_model.yaml`:
+
+```yaml
+api_type: chat
+model: org/MyModel
+temperature: 0
+max_completion_tokens: 10000
+```
+
+The `model` field must match the model name served by your vLLM instance (the value you passed to `vllm serve`).
+
+**2. Add a case** to `resolve_llm_config()` in `scripts/batch/hydra_batch_common.sh`:
+
+```bash
+vllm-my-model)
+    MODEL_CONFIG="vllm_my_model"
+    META_PROVIDER="vllm-local"
+    WORKER_PROVIDER="vllm-local"
+    ;;
+```
+
+After that you can pass `--llm vllm-my-model` to any batch wrapper.
+
+### Manual invocation
+
+If you prefer to call `scripts/run.py` directly instead of using the batch wrappers:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 uv run python scripts/run.py \
@@ -156,8 +200,6 @@ CUDA_VISIBLE_DEVICES=0 uv run python scripts/run.py \
   num_episodes=5 \
   workers=1
 ```
-
-Essentially, you need to set the `model` and `model@worker_model` to the vLLM model config, and set the `llm_provider` for all agents to `vllm-local`. You can also change the number of episodes and workers as needed. See [`../../scripts/batch/`](../../scripts/batch/) for base batch scripts.
 
 ## Step 5: Evaluate results with a local model
 

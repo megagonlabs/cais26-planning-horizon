@@ -35,6 +35,11 @@ print_common_options() {
     cat <<EOF
 Common options:
   --llm NAME           Model alias for both meta and worker agents.
+                       API models: gpt-4.1-mini (default), gpt-5-mini,
+                         qwen3-235b-instruct, gemini-flash-preview
+                       Local vLLM: vllm-qwen3-0p6b, vllm-qwen3-30b
+                         (requires a running vLLM server at localhost:8000;
+                          see docs/setup/vllm.md)
                        Default: ${DEFAULT_LLM}
   --strict             Run the strict config variant.
   --num-episodes N     Limit episodes for a sanity check.
@@ -132,9 +137,20 @@ resolve_llm_config() {
             META_PROVIDER="vertexai-openai"
             WORKER_PROVIDER="vertexai-openai"
             ;;
+        vllm-qwen3-0p6b)
+            MODEL_CONFIG="vllm_qwen3-0p6b"
+            META_PROVIDER="vllm-local"
+            WORKER_PROVIDER="vllm-local"
+            ;;
+        vllm-qwen3-30b)
+            MODEL_CONFIG="vllm_qwen3-30b-instruct"
+            META_PROVIDER="vllm-local"
+            WORKER_PROVIDER="vllm-local"
+            ;;
         *)
             echo "Error: unsupported --llm value '$LLM_ID'." >&2
             echo "Supported values: gpt-4.1-mini, gpt-5-mini, qwen3-235b-instruct, gemini-flash-preview" >&2
+            echo "                  vllm-qwen3-0p6b, vllm-qwen3-30b (requires a running vLLM server at localhost:8000)" >&2
             exit 1
             ;;
     esac
